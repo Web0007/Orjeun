@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">    
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration des Formations</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:'#4F46E5',secondary:'#8B5CF6',tertiary:'#0EA5E9'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<!-- Uploadcare -->
+<script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9fafb;
+}
+.notification {
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+.notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+.card-formation {
+  transition: all 0.2s ease;
+}
+.card-formation:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+.formation-annulee {
+  opacity: 0.7;
+}
+.formation-annulee::before {
+  content: "ANNULÉE";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #EF4444;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.description-truncate {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.quiz-item {
+  background-color: #f9fafb;
+  border-left: 3px solid #0EA5E9;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 4px;
+}
+.quiz-item p {
+  margin: 4px 0;
+}
+.quiz-options {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+.quiz-option {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+.quiz-option.correct {
+  background-color: #dcfce7;
+  border-color: #22c55e;
+}
+.uploaded-file {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background-color: #f0f9ff;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+.uploaded-file i {
+  margin-right: 8px;
+  color: #3b82f6;
+}
+.type-selector {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.type-selector button {
+  flex: 1;
+  padding: 12px;
+  background-color: #f1f5f9;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.type-selector button.active {
+  background-color: #4F46E5;
+  color: white;
+}
+.type-selector button:first-child {
+  border-radius: 8px 0 0 8px;
+}
+.type-selector button:last-child {
+  border-radius: 0 8px 8px 0;
+}
+.type-section {
+  display: none;
+}
+.type-section.active {
+  display: block;
+}
+.badge-type {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 8px;
+}
+.badge-online {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+.badge-professional {
+  background-color: #ede9fe;
+  color: #7c3aed;
+}
+.visible-field {
+  display: block !important;
+}
+.hidden-field {
+  display: none !important;
+}
+.upload-container {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background-color: #f9fafb;
+}
+.upload-container:hover {
+  border-color: #4F46E5;
+  background-color: #f0f9ff;
+}
+.upload-container i {
+  font-size: 2.5rem;
+  color: #4F46E5;
+}
+.file-preview {
+  max-height: 100px;
+  margin-top: 10px;
+  display: none;
+}
+.upload-status {
+  display: none;
+  margin-top: 10px;
+  text-align: center;
+}
+.upload-status i {
+  animation: spin 1s linear infinite;
+  margin-right: 5px;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(79, 70, 229, 0.3);
+  border-radius: 50%;
+  border-top-color: #4F46E5;
+  animation: spin 1s ease-in-out infinite;
+}
+.block-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+.content-preview {
+  max-width: 100%;
+  max-height: 300px;
+  margin-top: 1rem;
+}
+.content-text {
+  white-space: pre-wrap;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+.block-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.btn-save-block {
+  background-color: #4F46E5;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-edit-block {
+  background-color: #e5e7eb;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.pdf-upload-container {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background-color: #f9fafb;
+  margin-top: 10px;
+}
+.quiz-option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.quiz-option-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+}
+.quiz-preview-option {
+  padding: 8px;
+  margin-top: 5px;
+  border-left: 3px solid #e5e7eb;
+  border-radius: 4px;
+}
+.quiz-preview-option.correct {
+  background-color: #dcfce7;
+  border-left: 3px solid #22c55e;
+}
+.block-handle {
+  position: absolute;
+  top: 16px;
+  left: -10px;
+  cursor: move;
+  color: #9ca3af;
+  transition: all 0.2s;
+}
+.block-handle:hover {
+  color: #4F46E5;
+}
+.block-move-buttons {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.block-move-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border-radius: 6px;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.block-move-btn:hover {
+  background: #e5e7eb;
+}
+.block-move-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.block-card.sortable-ghost {
+  opacity: 0.5;
+  background: #f1f5f9;
+}
+.block-card.sortable-chosen {
+  box-shadow: 0 0 0 2px #4F46E5;
+}
+#formationEditSection {
+  display: none;
+}
+.edit-blocks-container {
+  min-height: 300px;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #f8fafc;
+}
+
+/* Ajout pour le bouton de suppression */
+.delete-block-btn {
+  position: absolute;
+  top: 16px;
+  right: 60px; /* Position ajustée pour éviter la superposition */
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
+  border-radius: 6px;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.delete-block-btn:hover {
+  background: #fee2e2;
+}
+</style>
+</head>
+<body class="min-h-screen pt-16 pb-24">
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+</div>
+<nav class="fixed top-0 left-0 w-full bg-white shadow-sm z-10">
+  <div class="px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center">
+      <span class="text-xl font-['Pacifico'] text-primary">Orjeun</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
+        <i class="ri-user-line text-gray-600"></i>
+      </div>
+      <span id="professorName" class="text-sm font-medium text-gray-700">Chargement...</span>
+    </div>
+  </div>
+</nav>
+<div class="container mx-auto px-4 pt-8 pb-24">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-800">Administration des Formations</h1>
+    <p class="text-gray-600 mt-1">Créez et gérez vos formations en ligne et professionnelles</p>
+    <div class="h-1 w-20 bg-primary mt-3 rounded-full"></div>
+  </div>
+  <div class="type-selector bg-white rounded-lg shadow-sm p-2">
+    <button id="btnOnline" class="active" type="button">Formation en Ligne</button>
+    <button id="btnProfessional" type="button">Formation Professionnelle</button>
+  </div>
+  <div id="onlineForm" class="type-section active bg-white rounded-lg shadow-sm p-6 mb-10">
+    <h2 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+      <i class="ri-computer-line mr-2 text-tertiary"></i>
+      Nouvelle formation en ligne
+    </h2>
+    <form id="onlineFormForm" class="space-y-4">
+      <div>
+        <label for="onlineTitre" class="block text-sm font-medium text-gray-700 mb-1">Titre de la formation</label>
+        <input type="text" id="onlineTitre" name="titre" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required>
+      </div>
+      <div>
+        <label for="onlineDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea id="onlineDescription" name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required></textarea>
+      </div>
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Contenu de la formation</label>
+        <div id="contentBlocks" class="space-y-4">
+        </div>
+        <button type="button" id="addBlockBtn" class="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-button transition-colors !rounded-button">
+          <span class="flex items-center justify-center">
+            <i class="ri-add-line mr-2"></i>
+            Ajouter un bloc de contenu
+          </span>
+        </button>
+      </div>
+      <div class="pt-4">
+        <button type="submit" class="w-full bg-tertiary hover:bg-tertiary/90 text-white font-medium py-2.5 px-4 rounded-button transition-colors !rounded-button">
+          <span class="flex items-center justify-center">
+            <i class="ri-save-line mr-2"></i>
+            Créer la formation en ligne
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+  <div id="professionalForm" class="type-section bg-white rounded-lg shadow-sm p-6 mb-10">
+    <h2 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+      <i class="ri-building-line mr-2 text-secondary"></i>
+      Nouvelle formation professionnelle
+    </h2>
+    <form id="professionalFormForm" class="space-y-4">
+      <div>
+        <label for="proTitre" class="block text-sm font-medium text-gray-700 mb-1">Titre de la formation</label>
+        <input type="text" id="proTitre" name="titre" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required>
+      </div>
+      <div>
+        <label for="proDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea id="proDescription" name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="proDate" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <input type="date" id="proDate" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required>
+        </div>
+        <div>
+          <label for="proHeure" class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+          <input type="time" id="proHeure" name="heure" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="proDepartement" class="block text-sm font-medium text-gray-700 mb-1">Département</label>
+          <select id="proDepartement" name="departement" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required>
+            <option value="" disabled selected>Chargement...</option>
+          </select>
+        </div>
+        <div>
+          <label for="proCommune" class="block text-sm font-medium text-gray-700 mb-1">Commune</label>
+          <select id="proCommune" name="commune" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required>
+            <option value="" disabled selected>Sélectionnez d'abord un département</option>
+          </select>
+        </div>
+      </div>
+      <div id="nouvelleCommuneField" class="hidden-field">
+        <label for="nouvelleCommuneInput" class="block text-sm font-medium text-gray-700 mb-1">Nouvelle commune</label>
+        <input type="text" id="nouvelleCommuneInput" name="nouvelleCommune" placeholder="Entrez le nom de la nouvelle commune" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm">
+      </div>
+      <div>
+        <label for="proParticipants" class="block text-sm font-medium text-gray-700 mb-1">Nombre maximum de participants</label>
+        <input type="number" id="proParticipants" name="participants" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required>
+      </div>
+      <div class="pt-4">
+        <button type="submit" class="w-full bg-secondary hover:bg-secondary/90 text-white font-medium py-2.5 px-4 rounded-button transition-colors !rounded-button">
+          <span class="flex items-center justify-center">
+            <i class="ri-save-line mr-2"></i>
+            Planifier la formation professionnelle
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+  <div id="notification" class="notification mt-4 py-3 px-4 rounded-md hidden">
+    <div class="flex items-center">
+      <i id="notificationIcon" class="mr-2"></i>
+      <span id="notificationMessage"></span>
+    </div>
+  </div>
+  <div id="formationEditSection" class="bg-white rounded-lg shadow-sm p-6 mb-10">
+    <div class="flex justify-between items-center mb-6">
+      <h2 id="editFormationTitle" class="text-lg font-semibold text-gray-800">Édition de la formation</h2>
+      <button id="cancelEditBtn" class="px-4 py-2 border border-gray-300 rounded-button text-gray-700 hover:bg-gray-50 !rounded-button">Retour à l'historique</button>
+    </div>
+    <div class="mb-6">
+      <label for="editTitre" class="block text-sm font-medium text-gray-700 mb-1">Titre de la formation</label>
+      <input type="text" id="editTitre" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required>
+    </div>
+    <div class="mb-6">
+      <label for="editDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+      <textarea id="editDescription" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-button text-sm" required></textarea>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Contenu de la formation</label>
+      <div class="edit-blocks-container" id="editContentBlocks">
+      </div>
+      <button type="button" id="addEditBlockBtn" class="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-button transition-colors !rounded-button">
+        <span class="flex items-center justify-center">
+          <i class="ri-add-line mr-2"></i>
+          Ajouter un bloc de contenu
+        </span>
+      </button>
+    </div>
+    <div class="flex justify-end space-x-3 pt-4">
+      <button id="saveEditBtn" class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white font-medium rounded-button transition-colors !rounded-button">
+        <span class="flex items-center justify-center">
+          <i class="ri-save-line mr-2"></i>
+          Enregistrer les modifications
+        </span>
+      </button>
+      <button id="cancelEditBtn2" class="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-button hover:bg-gray-50 !rounded-button">Annuler</button>
+    </div>
+  </div>
+  <div id="formationsHistorySection" class="bg-white rounded-lg shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-4 text-gray-800">Historique des Formations</h2>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+      <div class="inline-flex p-1 bg-gray-100 rounded-full">
+        <button id="tabAvenir" class="px-4 py-1.5 rounded-full bg-primary text-white text-sm font-medium !rounded-full">À venir</button>
+        <button id="tabPassees" class="px-4 py-1.5 rounded-full text-gray-700 text-sm font-medium !rounded-full">Passées</button>
+      </div>
+      <div class="relative w-full sm:w-64">
+        <input type="text" id="searchFormation" placeholder="Rechercher..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-button text-sm">
+        <div class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 flex items-center justify-center">
+          <i class="ri-search-line text-gray-400"></i>
+        </div>
+      </div>
+    </div>
+    <div id="formationsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    </div>
+    <div id="emptyState" class="hidden py-12 flex flex-col items-center justify-center">
+      <div class="w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 mb-4">
+        <i class="ri-calendar-line text-gray-400 text-2xl"></i>
+      </div>
+      <h3 class="text-gray-700 font-medium">Aucune formation trouvée</h3>
+      <p class="text-gray-500 text-sm mt-1 text-center">Ajoutez une nouvelle formation ou modifiez vos filtres</p>
+    </div>
+  </div>
+</div>
+<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg p-6 w-11/12 max-w-md">
+    <h3 id="confirmTitle" class="text-lg font-semibold mb-3">Confirmation</h3>
+    <p id="confirmMessage" class="text-gray-600 mb-6">Êtes-vous sûr de vouloir effectuer cette action ?</p>
+    <div class="flex justify-end space-x-3">
+      <button id="cancelAction" class="px-4 py-2 border border-gray-300 rounded-button text-gray-700 hover:bg-gray-50 !rounded-button">Annuler</button>
+      <button id="confirmAction" class="px-4 py-2 bg-red-500 text-white rounded-button hover:bg-red-600 !rounded-button">Confirmer</button>
+    </div>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+  authDomain: "orjeun-9dec4.firebaseapp.com",
+  databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+  projectId: "orjeun-9dec4",
+  storageBucket: "orjeun-9dec4.appspot.com",
+  messagingSenderId: "979782321937",
+  appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+  measurementId: "G-G316HCYF9E"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+const onlineForm = document.getElementById('onlineForm');
+const professionalForm = document.getElementById('professionalForm');
+const btnOnline = document.getElementById('btnOnline');
+const btnProfessional = document.getElementById('btnProfessional');
+const onlineFormForm = document.getElementById('onlineFormForm');
+const professionalFormForm = document.getElementById('professionalFormForm');
+const notification = document.getElementById('notification');
+const notificationIcon = document.getElementById('notificationIcon');
+const notificationMessage = document.getElementById('notificationMessage');
+const formationsList = document.getElementById('formationsList');
+const emptyState = document.getElementById('emptyState');
+const tabAvenir = document.getElementById('tabAvenir');
+const tabPassees = document.getElementById('tabPassees');
+const searchFormation = document.getElementById('searchFormation');
+const confirmModal = document.getElementById('confirmModal');
+const confirmTitle = document.getElementById('confirmTitle');
+const confirmMessage = document.getElementById('confirmMessage');
+const confirmAction = document.getElementById('confirmAction');
+const cancelAction = document.getElementById('cancelAction');
+const professorName = document.getElementById('professorName');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const addBlockBtn = document.getElementById('addBlockBtn');
+const contentBlocks = document.getElementById('contentBlocks');
+const formationEditSection = document.getElementById('formationEditSection');
+const formationsHistorySection = document.getElementById('formationsHistorySection');
+const editFormationTitle = document.getElementById('editFormationTitle');
+const editTitre = document.getElementById('editTitre');
+const editDescription = document.getElementById('editDescription');
+const editContentBlocks = document.getElementById('editContentBlocks');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+const cancelEditBtn2 = document.getElementById('cancelEditBtn2');
+const saveEditBtn = document.getElementById('saveEditBtn');
+const addEditBlockBtn = document.getElementById('addEditBlockBtn');
+
+const departementSelect = document.getElementById('proDepartement');
+const communeSelect = document.getElementById('proCommune');
+const nouvelleCommuneField = document.getElementById('nouvelleCommuneField');
+const nouvelleCommuneInput = document.getElementById('nouvelleCommuneInput');
+
+
+const UPLOADCARE_PUB_KEY = 'ffd4bffb1936c80f5abd';
+
+let currentTab = 'avenir';
+let currentSearch = '';
+let formations = [];
+let actionCallback = null;
+let currentUserEmail = null;
+let contentBlocksData = [];
+let editContentBlocksData = [];
+let currentEditFormationId = null;
+
+async function chargerDepartements(selectElement) {
+  try {
+    const snapshot = await database.ref('region_nationale').once('value');
+    if (!snapshot.exists()) {
+      selectElement.innerHTML = '<option value="" disabled selected>Aucun département disponible</option>';
+      return;
+    }
+    selectElement.innerHTML = '<option value="" disabled selected>Sélectionnez un département</option>';
+    snapshot.forEach(departmentSnapshot => {
+      const option = document.createElement('option');
+      option.value = departmentSnapshot.key;
+      option.textContent = departmentSnapshot.key;
+      selectElement.appendChild(option);
+    });
+  } catch (error) {
+    showNotification("Erreur lors du chargement des départements", "error");
+  }
+}
+
+async function chargerCommunes(departement, communeSelectElement) {
+  try {
+    const snapshot = await database.ref(`region_nationale/${departement}`).once('value');
+    if (!snapshot.exists()) {
+      communeSelectElement.innerHTML = '<option value="" disabled selected>Aucune commune disponible</option>';
+      return;
+    }
+    communeSelectElement.innerHTML = '<option value="" disabled selected>Sélectionnez une commune</option>';
+    snapshot.forEach(communeSnapshot => {
+      if(communeSnapshot.key && communeSnapshot.key.trim() !== '') {
+        const option = document.createElement('option');
+        option.value = communeSnapshot.key;
+        option.textContent = communeSnapshot.key;
+        communeSelectElement.appendChild(option);
+      }
+    });
+    const autreOption = document.createElement('option');
+    autreOption.value = 'autre';
+    autreOption.textContent = 'Ma commune n\'est pas dans la liste';
+    communeSelectElement.appendChild(autreOption);
+  } catch (error) {
+    showNotification("Erreur lors du chargement des communes", "error");
+  }
+}
+
+function showNotification(message, type) {
+  notification.classList.remove('hidden', 'bg-green-100', 'bg-red-100');
+  notificationIcon.classList.remove('ri-check-line', 'ri-error-warning-line', 'text-green-500', 'text-red-500');
+  if (type === 'success') {
+    notification.classList.add('bg-green-100');
+    notificationIcon.classList.add('ri-check-line', 'text-green-500');
+  } else {
+    notification.classList.add('bg-red-100');
+    notificationIcon.classList.add('ri-error-warning-line', 'text-red-500');
+  }
+  notificationMessage.textContent = message;
+  notification.classList.add('show');
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => notification.classList.add('hidden'), 300);
+  }, 3000);
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'Date non définie';
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(dateStr).toLocaleDateString('fr-FR', options);
+}
+
+function isUpcoming(dateStr) {
+  if (!dateStr) return false;
+  const formationDate = new Date(dateStr);
+  formationDate.setHours(23, 59, 59);
+  return formationDate >= new Date();
+}
+
+function displayFormations() {
+  formationsList.innerHTML = '';
+  let filteredFormations = [...formations];
+  if (currentTab === 'avenir') {
+    filteredFormations = filteredFormations.filter(f => 
+      (f.type === 'professional' ? isUpcoming(f.date) : true) && !f.annulee
+    );
+  } else {
+    filteredFormations = filteredFormations.filter(f => 
+      (f.type === 'professional' ? !isUpcoming(f.date) : false) || f.annulee
+    );
+  }
+  if (currentSearch) {
+    const searchLower = currentSearch.toLowerCase();
+    filteredFormations = filteredFormations.filter(f => 
+      f.titre.toLowerCase().includes(searchLower) ||
+      f.description.toLowerCase().includes(searchLower) ||
+      (f.lieu && f.lieu.toLowerCase().includes(searchLower))
+    );
+  }
+  filteredFormations = filteredFormations.filter(f => f.prof === currentUserEmail);
+  if (filteredFormations.length === 0) {
+    emptyState.classList.remove('hidden');
+    formationsList.innerHTML = '';
+  } else {
+    emptyState.classList.add('hidden');
+    filteredFormations.sort((a, b) => new Date(b.dateCreation) - new Date(a.dateCreation));
+    filteredFormations.forEach(formation => {
+      const isOnline = formation.type === 'online';
+      const card = document.createElement('div');
+      card.className = `card-formation relative bg-white border rounded-lg overflow-hidden ${formation.annulee ? 'formation-annulee' : ''}`;
+      const isUpcomingFormation = isOnline ? false : isUpcoming(formation.date);
+      const statusClass = isOnline ? 'bg-blue-100 text-blue-800' : 
+        (isUpcomingFormation && !formation.annulee ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800');
+      const statusText = isOnline ? 'En ligne' : (isUpcomingFormation && !formation.annulee ? 'À venir' : 'Passée');
+      card.innerHTML = `
+        <div class="p-5">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800">${formation.titre}</h3>
+            <div class="flex items-center">
+              <span class="text-xs px-2 py-1 rounded-full ${statusClass}">${statusText}</span>
+              <span class="badge-type ${isOnline ? 'badge-online' : 'badge-professional'}">
+                ${isOnline ? 'En ligne' : 'Professionnelle'}
+              </span>
+            </div>
+          </div>
+          ${isOnline ? `
+            <div class="mb-4">
+              <p class="text-sm text-gray-600 mb-3">${formation.description}</p>
+              <div class="text-sm text-gray-500">
+                ${formation.content ? formation.content.length : 0} bloc(s) de contenu
+              </div>
+            </div>
+          ` : `
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center text-sm text-gray-600">
+                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                  <i class="ri-calendar-line"></i>
+                </div>
+                ${formatDate(formation.date)} à ${formation.heure || 'Non spécifié'}
+              </div>
+              <div class="flex items-center text-sm text-gray-600">
+                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                  <i class="ri-map-pin-line"></i>
+                </div>
+                ${formation.lieu || 'Non spécifié'}
+              </div>
+              <div class="flex items-center text-sm text-gray-600">
+                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                  <i class="ri-user-line"></i>
+                </div>
+                ${formation.participants || 'Non spécifié'} participants maximum
+              </div>
+            </div>
+          `}
+          <p class="text-sm text-gray-600 description-truncate">${formation.description}</p>
+          <div class="mt-4 flex justify-end space-x-2">
+            ${isOnline ? `
+              <button class="edit-formation px-3 py-1.5 bg-gray-50 text-gray-600 rounded-button text-xs font-medium hover:bg-gray-100 !rounded-button" data-id="${formation.id}">
+                <span class="flex items-center">
+                  <i class="ri-edit-line mr-1"></i>
+                  Éditer
+                </span>
+              </button>
+            ` : ''}
+            ${!isOnline && isUpcoming(formation.date) && !formation.annulee ? `
+              <button class="cancel-formation px-3 py-1.5 bg-red-50 text-red-600 rounded-button text-xs font-medium hover:bg-red-100 !rounded-button" data-id="${formation.id}">
+                <span class="flex items-center">
+                  <i class="ri-close-circle-line mr-1"></i>
+                  Annuler
+                </span>
+              </button>
+            ` : ''}
+            <button class="delete-formation px-3 py-1.5 bg-gray-50 text-gray-600 rounded-button text-xs font-medium hover:bg-gray-100 !rounded-button" data-id="${formation.id}">
+              <span class="flex items-center">
+                <i class="ri-delete-bin-line mr-1"></i>
+                Supprimer
+              </span>
+            </button>
+          </div>
+        </div>
+      `;
+      formationsList.appendChild(card);
+    });
+    document.querySelectorAll('.delete-formation').forEach(button => {
+      button.addEventListener('click', function() {
+        const formationId = this.getAttribute('data-id');
+        showConfirmModal(
+          'Supprimer la formation',
+          'Êtes-vous sûr de vouloir supprimer cette formation ? Cette action est irréversible.',
+          () => deleteFormation(formationId)
+        );
+      });
+    });
+    document.querySelectorAll('.cancel-formation').forEach(button => {
+      button.addEventListener('click', function() {
+        const formationId = this.getAttribute('data-id');
+        showConfirmModal(
+          'Annuler la formation',
+          'Êtes-vous sûr de vouloir annuler cette formation ? Les participants seront notifiés.',
+          () => cancelFormation(formationId)
+        );
+      });
+    });
+    document.querySelectorAll('.edit-formation').forEach(button => {
+      button.addEventListener('click', function() {
+        const formationId = this.getAttribute('data-id');
+        loadFormationForEdit(formationId);
+      });
+    });
+  }
+}
+
+function showConfirmModal(title, message, callback) {
+  confirmTitle.textContent = title;
+  confirmMessage.textContent = message;
+  actionCallback = callback;
+  confirmModal.classList.remove('hidden');
+}
+
+function closeConfirmModal() {
+  confirmModal.classList.add('hidden');
+  actionCallback = null;
+}
+
+function deleteFormation(formationId) {
+  database.ref('formations/' + formationId).remove()
+    .then(() => {
+      showNotification('Formation supprimée avec succès', 'success');
+      loadFormations();
+    })
+    .catch(error => {
+      showNotification('Erreur lors de la suppression de la formation', 'error');
+    });
+}
+
+function cancelFormation(formationId) {
+  database.ref('formations/' + formationId).update({ annulee: true })
+    .then(() => {
+      showNotification('Formation annulée avec succès', 'success');
+      loadFormations();
+    })
+    .catch(error => {
+      showNotification('Erreur lors de l\'annulation de la formation', 'error');
+    });
+}
+
+function loadFormations() {
+  database.ref('formations').once('value')
+    .then(snapshot => {
+      formations = [];
+      if (snapshot.exists()) {
+        snapshot.forEach(childSnapshot => {
+          const formation = childSnapshot.val();
+          formation.id = childSnapshot.key;
+          formations.push(formation);
+        });
+      }
+      displayFormations();
+    })
+    .catch(error => {
+      showNotification('Erreur lors du chargement des formations', 'error');
+    });
+}
+
+async function ajouterCommune(departement, nouvelleCommune) {
+  try {
+    const ref = database.ref(`region_nationale/${departement}/${nouvelleCommune}`);
+    const snapshot = await ref.once('value');
+    if (!snapshot.exists()) {
+      await ref.set(true);
+      showNotification(`Commune "${nouvelleCommune}" ajoutée avec succès`, 'success');
+      return true;
+    }
+    return false;
+  } catch (error) {
+    showNotification("Erreur lors de l'ajout de la commune", 'error');
+    return false;
+  }
+}
+
+async function uploadPDF(file) {
+  try {
+    if (file.size > 10 * 1024 * 1024) {
+      showNotification("Le fichier est trop volumineux (max 10MB)", "error");
+      return null;
+    }
+    if (file.type !== "application/pdf") {
+      showNotification("Seuls les fichiers PDF sont acceptés", "error");
+      return null;
+    }
+    const formData = new FormData();
+    formData.append("file", file);
+    const uploadRes = await fetch("https://upload.gofile.io/uploadFile", {
+      method: "POST",
+      body: formData
+    });
+    const uploadData = await uploadRes.json();
+    if (uploadData.status !== 'ok') {
+      throw new Error('Échec de l\'upload du fichier sur GoFile');
+    }
+    const downloadLink = uploadData.data.downloadPage;
+    return {
+      url: downloadLink,
+      name: file.name
+    };
+  } catch (error) {
+    showNotification("Échec de l'upload du PDF: " + error.message, "error");
+    return null;
+  }
+}
+
+function addContentBlock(container, isEditMode = false) {
+  const blockId = Date.now();
+  const blockCard = document.createElement('div');
+  blockCard.className = 'block-card';
+  blockCard.id = `block-${blockId}`;
+  blockCard.setAttribute('data-type', '');
+  blockCard.innerHTML = `
+    <div class="block-move-buttons">
+      <button type="button" class="block-move-up-btn block-move-btn" title="Déplacer vers le haut">
+        <i class="ri-arrow-up-s-line"></i>
+      </button>
+      <button type="button" class="block-move-down-btn block-move-btn" title="Déplacer vers le bas">
+        <i class="ri-arrow-down-s-line"></i>
+      </button>
+    </div>
+    <button type="button" class="delete-block-btn" title="Supprimer">
+      <i class="ri-delete-bin-line"></i>
+    </button>
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="text-sm font-medium text-gray-700">Nouveau bloc de contenu</h3>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Type de contenu</label>
+      <select class="block-type-selector w-full px-3 py-2 border border-gray-300 rounded-button text-sm" required>
+        <option value="">Choisir un type</option>
+        <option value="text">Texte</option>
+        <option value="image">Image</option>
+        <option value="link">Lien</option>
+        <option value="pdf">Document PDF</option>
+        <option value="quiz">Quiz</option>
+      </select>
+    </div>
+    <div class="block-content-form"></div>
+    <div class="block-content-preview hidden"></div>
+  `;
+  container.appendChild(blockCard);
+  const moveUpBtn = blockCard.querySelector('.block-move-up-btn');
+  const moveDownBtn = blockCard.querySelector('.block-move-down-btn');
+  moveUpBtn.addEventListener('click', () => moveBlock(blockCard, 'up'));
+  moveDownBtn.addEventListener('click', () => moveBlock(blockCard, 'down'));
+  updateMoveButtons(container);
+  const typeSelector = blockCard.querySelector('.block-type-selector');
+  typeSelector.addEventListener('change', function() {
+    const blockType = this.value;
+    blockCard.setAttribute('data-type', blockType);
+    const contentForm = blockCard.querySelector('.block-content-form');
+    const contentPreview = blockCard.querySelector('.block-content-preview');
+    contentForm.innerHTML = '';
+    contentPreview.innerHTML = '';
+    contentPreview.classList.add('hidden');
+    if (blockType === 'text') {
+      contentForm.innerHTML = `
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Contenu texte</label>
+          <textarea rows="4" class="text-content-input w-full px-3 py-2 border border-gray-300 rounded-button text-sm" placeholder="Saisissez votre texte ici..." required></textarea>
+        </div>
+        <div class="block-actions">
+          <button type="button" class="save-block-btn btn-save-block">Enregistrer</button>
+        </div>
+      `;
+      const saveBtn = contentForm.querySelector('.save-block-btn');
+      saveBtn.addEventListener('click', function() {
+        const textInput = contentForm.querySelector('.text-content-input');
+        const textContent = textInput.value.trim();
+        if (!textContent) {
+          showNotification("Veuillez saisir du texte", "error");
+          return;
+        }
+        contentPreview.innerHTML = `
+          <div class="content-text">${textContent}</div>
+          <div class="block-actions">
+            <button type="button" class="edit-block-btn btn-edit-block">Modifier</button>
+          </div>
+        `;
+        contentPreview.classList.remove('hidden');
+        contentForm.classList.add('hidden');
+        if (isEditMode) {
+          saveEditBlockContent(blockId, {
+            type: 'text',
+            content: textContent
+          });
+        } else {
+          saveBlockContent(blockId, {
+            type: 'text',
+            content: textContent
+          });
+        }
+        const editBtn = contentPreview.querySelector('.edit-block-btn');
+        editBtn.addEventListener('click', function() {
+          contentPreview.classList.add('hidden');
+          contentForm.classList.remove('hidden');
+        });
+      });
+    } else if (blockType === 'image') {
+      contentForm.innerHTML = `
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+          <input type="hidden" role="uploadcare-uploader" id="uploadcare-${blockId}" data-public-key="${UPLOADCARE_PUB_KEY}" data-images-only="true" data-preview-step="true" />
+          <div id="imagePreviewContainer-${blockId}" class="mt-4"></div>
+        </div>
+      `;
+      
+      const uploadInput = document.getElementById(`uploadcare-${blockId}`);
+      if (uploadInput) {
+        const widget = uploadcare.Widget(uploadInput);
+        widget.onUploadComplete(function(fileInfo) {
+          if (fileInfo) {
+            const imageUrl = fileInfo.cdnUrl;
+            const contentPreview = blockCard.querySelector('.block-content-preview');
+            if (contentPreview) {
+              contentPreview.innerHTML = `
+                <img src="${imageUrl}" alt="Image de la formation" class="content-preview rounded-lg">
+                <div class="block-actions">
+                  <button type="button" class="edit-block-btn btn-edit-block">Modifier</button>
+                </div>
+              `;
+              contentPreview.classList.remove('hidden');
+              contentForm.classList.add('hidden');
+              
+              if (isEditMode) {
+                saveEditBlockContent(blockId, {
+                  type: 'image',
+                  content: imageUrl
+                });
+              } else {
+                saveBlockContent(blockId, {
+                  type: 'image',
+                  content: imageUrl
+                });
+              }
+              
+              const editBtn = contentPreview.querySelector('.edit-block-btn');
+              if (editBtn) {
+                editBtn.addEventListener('click', function() {
+                  contentPreview.classList.add('hidden');
+                  contentForm.classList.remove('hidden');
+                });
+              }
+            }
+          }
+        });
+      }
+    } else if (blockType === 'link') {
+      contentForm.innerHTML = `
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">URL du lien</label>
+          <input type="url" class="link-url-input w-full px-3 py-2 border border-gray-300 rounded-button text-sm" placeholder="https://exemple.com" required>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Texte du lien (optionnel)</label>
+          <input type="text" class="link-text-input w-full px-3 py-2 border border-gray-300 rounded-button text-sm" placeholder="Ex: Visiter notre site">
+        </div>
+        <div class="block-actions">
+          <button type="button" class="save-block-btn btn-save-block">Enregistrer</button>
+        </div>
+      `;
+      const saveBtn = contentForm.querySelector('.save-block-btn');
+      saveBtn.addEventListener('click', function() {
+        const urlInput = contentForm.querySelector('.link-url-input');
+        const textInput = contentForm.querySelector('.link-text-input');
+        const url = urlInput.value.trim();
+        const text = textInput.value.trim() || url;
+        if (!url) {
+          showNotification("Veuillez saisir une URL valide", "error");
+          return;
+        }
+        const contentPreview = blockCard.querySelector('.block-content-preview');
+        contentPreview.innerHTML = `
+          <div class="flex items-center">
+            <i class="ri-links-line text-xl text-primary mr-2"></i>
+            <a href="${url}" target="_blank" class="text-primary hover:underline">${text}</a>
+          </div>
+          <div class="block-actions">
+            <button type="button" class="edit-block-btn btn-edit-block">Modifier</button>
+          </div>
+        `;
+        contentPreview.classList.remove('hidden');
+        contentForm.classList.add('hidden');
+        const editBtn = contentPreview.querySelector('.edit-block-btn');
+        editBtn.addEventListener('click', function() {
+          contentPreview.classList.add('hidden');
+          contentForm.classList.remove('hidden');
+        });
+        if (isEditMode) {
+          saveEditBlockContent(blockId, {
+            type: 'link',
+            url: url,
+            text: text
+          });
+        } else {
+          saveBlockContent(blockId, {
+            type: 'link',
+            url: url,
+            text: text
+          });
+        }
+      });
+    } else if (blockType === 'pdf') {
+      contentForm.innerHTML = `
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Document PDF</label>
+          <div class="pdf-upload-container" onclick="document.getElementById('pdfInput-${blockId}').click()">
+            <i class="ri-file-pdf-line text-4xl text-primary mb-2"></i>
+            <p class="font-medium">Cliquer pour sélectionner un fichier PDF</p>
+            <p class="text-sm text-gray-500 mt-1">PDF uniquement - Max 10MB</p>
+          </div>
+          <input type="file" id="pdfInput-${blockId}" accept=".pdf" hidden>
+          <div id="pdfStatus-${blockId}" class="upload-status hidden">
+            <i class="ri-loader-4-line"></i> Téléchargement en cours...
+          </div>
+        </div>
+      `;
+      const pdfInput = document.getElementById(`pdfInput-${blockId}`);
+      pdfInput.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const pdfStatus = document.getElementById(`pdfStatus-${blockId}`);
+        pdfStatus.classList.remove('hidden');
+        const fileInfo = await uploadPDF(file);
+        if (!fileInfo) {
+          pdfStatus.classList.add('hidden');
+          return;
+        }
+        const contentPreview = blockCard.querySelector('.block-content-preview');
+        contentPreview.innerHTML = `
+          <div class="flex items-center">
+            <i class="ri-file-pdf-line text-xl text-primary mr-2"></i>
+            <a href="${fileInfo.url}" target="_blank" class="text-primary hover:underline">${fileInfo.name}</a>
+          </div>
+          <div class="block-actions">
+            <button type="button" class="edit-block-btn btn-edit-block">Modifier</button>
+          </div>
+        `;
+        contentPreview.classList.remove('hidden');
+        contentForm.classList.add('hidden');
+        pdfStatus.classList.add('hidden');
+        if (isEditMode) {
+          saveEditBlockContent(blockId, {
+            type: 'pdf',
+            url: fileInfo.url,
+            name: fileInfo.name
+          });
+        } else {
+          saveBlockContent(blockId, {
+            type: 'pdf',
+            url: fileInfo.url,
+            name: fileInfo.name
+          });
+        }
+        const editBtn = contentPreview.querySelector('.edit-block-btn');
+        editBtn.addEventListener('click', function() {
+          contentPreview.classList.add('hidden');
+          contentForm.classList.remove('hidden');
+        });
+      });
+    } else if (blockType === 'quiz') {
+      contentForm.innerHTML = `
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Question</label>
+          <input type="text" class="quiz-question-input w-full px-3 py-2 border border-gray-300 rounded-button text-sm" placeholder="Posez votre question..." required>
+        </div>
+        <div class="quiz-options-container space-y-2 mb-3">
+        </div>
+        <button type="button" class="add-option-btn w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-button text-sm flex items-center justify-center">
+          <i class="ri-add-line mr-2"></i> Ajouter une option
+        </button>
+        <div class="block-actions">
+          <button type="button" class="save-block-btn btn-save-block">Enregistrer</button>
+        </div>
+      `;
+      const optionsContainer = contentForm.querySelector('.quiz-options-container');
+      let optionsCount = 0;
+      function addOption() {
+        if (optionsCount >= 4) {
+          showNotification("Maximum 4 options autorisées", "error");
+          return;
+        }
+        const optionId = `option-${Date.now()}`;
+        const optionElement = document.createElement('div');
+        optionElement.className = 'quiz-option-item flex items-center space-x-2';
+        optionElement.innerHTML = `
+          <input type="text" class="quiz-option-input flex-1" placeholder="Option ${optionsCount+1}" required>
+          <div class="flex items-center">
+            <input type="radio" name="correct-${blockId}" class="correct-option-radio" id="${optionId}">
+            <label for="${optionId}" class="ml-1 text-sm text-gray-700">Bonne réponse</label>
+          </div>
+          <button type="button" class="remove-option-btn text-red-600">
+            <i class="ri-delete-bin-line"></i>
+          </button>
+        `;
+        optionsContainer.appendChild(optionElement);
+        optionsCount++;
+        const removeBtn = optionElement.querySelector('.remove-option-btn');
+        removeBtn.addEventListener('click', function() {
+          optionElement.remove();
+          optionsCount--;
+        });
+      }
+      addOption();
+      addOption();
+      const addOptionBtn = contentForm.querySelector('.add-option-btn');
+      addOptionBtn.addEventListener('click', addOption);
+      const saveBtn = contentForm.querySelector('.save-block-btn');
+      saveBtn.addEventListener('click', function() {
+        const questionInput = contentForm.querySelector('.quiz-question-input');
+        const question = questionInput.value.trim();
+        if (!question) {
+          showNotification("Veuillez saisir une question", "error");
+          return;
+        }
+        const optionElements = contentForm.querySelectorAll('.quiz-option-item');
+        if (optionElements.length < 2) {
+          showNotification("Au moins deux options sont nécessaires", "error");
+          return;
+        }
+        const options = [];
+        let correctOptionIndex = -1;
+        let index = 0;
+        for (const optionElement of optionElements) {
+          const textInput = optionElement.querySelector('.quiz-option-input');
+          const radioInput = optionElement.querySelector('.correct-option-radio');
+          const optionText = textInput.value.trim();
+          if (!optionText) {
+            showNotification("Veuillez remplir toutes les options", "error");
+            return;
+          }
+          options.push({
+            text: optionText,
+            correct: radioInput.checked
+          });
+          if (radioInput.checked) {
+            correctOptionIndex = index;
+          }
+          index++;
+        }
+        if (correctOptionIndex === -1) {
+          showNotification("Veuillez sélectionner la bonne réponse", "error");
+          return;
+        }
+        const contentPreview = blockCard.querySelector('.block-content-preview');
+        let optionsHtml = '';
+        options.forEach((option, idx) => {
+          optionsHtml += `
+            <div class="quiz-preview-option ${option.correct ? 'correct' : ''}">
+              ${idx+1}. ${option.text} ${option.correct ? '<span class="text-green-500">(correcte)</span>' : ''}
+            </div>
+          `;
+        });
+        contentPreview.innerHTML = `
+          <div class="quiz-preview">
+            <p class="font-medium">${question}</p>
+            <div class="quiz-options mt-2">
+              ${optionsHtml}
+            </div>
+          </div>
+          <div class="block-actions">
+            <button type="button" class="edit-block-btn btn-edit-block">Modifier</button>
+          </div>
+        `;
+        contentPreview.classList.remove('hidden');
+        contentForm.classList.add('hidden');
+        if (isEditMode) {
+          saveEditBlockContent(blockId, {
+            type: 'quiz',
+            question: question,
+            options: options
+          });
+        } else {
+          saveBlockContent(blockId, {
+            type: 'quiz',
+            question: question,
+            options: options
+          });
+        }
+        const editBtn = contentPreview.querySelector('.edit-block-btn');
+        editBtn.addEventListener('click', function() {
+          contentPreview.classList.add('hidden');
+          contentForm.classList.remove('hidden');
+        });
+      });
+    }
+  });
+  const deleteBtn = blockCard.querySelector('.delete-block-btn');
+  deleteBtn.addEventListener('click', function() {
+    blockCard.remove();
+    if (isEditMode) {
+      editContentBlocksData = editContentBlocksData.filter(block => block.id !== blockId);
+    } else {
+      contentBlocksData = contentBlocksData.filter(block => block.id !== blockId);
+    }
+    updateMoveButtons(container);
+  });
+}
+
+function moveBlock(blockCard, direction) {
+  const container = blockCard.parentElement;
+  const blocks = Array.from(container.children);
+  const currentIndex = blocks.indexOf(blockCard);
+  if (direction === 'up' && currentIndex > 0) {
+    container.insertBefore(blockCard, blocks[currentIndex - 1]);
+    if (container === editContentBlocks) {
+      const temp = editContentBlocksData[currentIndex];
+      editContentBlocksData[currentIndex] = editContentBlocksData[currentIndex - 1];
+      editContentBlocksData[currentIndex - 1] = temp;
+    } else {
+      const temp = contentBlocksData[currentIndex];
+      contentBlocksData[currentIndex] = contentBlocksData[currentIndex - 1];
+      contentBlocksData[currentIndex - 1] = temp;
+    }
+  } else if (direction === 'down' && currentIndex < blocks.length - 1) {
+    if (currentIndex === blocks.length - 2) {
+      container.appendChild(blockCard);
+    } else {
+      container.insertBefore(blockCard, blocks[currentIndex + 2]);
+    }
+    if (container === editContentBlocks) {
+      const temp = editContentBlocksData[currentIndex];
+      editContentBlocksData[currentIndex] = editContentBlocksData[currentIndex + 1];
+      editContentBlocksData[currentIndex + 1] = temp;
+    } else {
+      const temp = contentBlocksData[currentIndex];
+      contentBlocksData[currentIndex] = contentBlocksData[currentIndex + 1];
+      contentBlocksData[currentIndex + 1] = temp;
+    }
+  }
+  updateMoveButtons(container);
+}
+
+function updateMoveButtons(container) {
+  const blocks = Array.from(container.children);
+  blocks.forEach((block, index) => {
+    const moveUpBtn = block.querySelector('.block-move-up-btn');
+    const moveDownBtn = block.querySelector('.block-move-down-btn');
+    if (moveUpBtn && moveDownBtn) {
+      moveUpBtn.disabled = index === 0;
+      moveDownBtn.disabled = index === blocks.length - 1;
+    }
+  });
+}
+
+function saveBlockContent(blockId, content) {
+  contentBlocksData = contentBlocksData.filter(block => block.id !== blockId);
+  contentBlocksData.push({
+    id: blockId,
+    ...content
+  });
+}
+
+function saveEditBlockContent(blockId, content) {
+  editContentBlocksData = editContentBlocksData.filter(block => block.id !== blockId);
+  editContentBlocksData.push({
+    id: blockId,
+    ...content
+  });
+}
+
+function loadFormationForEdit(formationId) {
+  const formation = formations.find(f => f.id === formationId);
+  if (!formation || formation.type !== 'online') {
+    showNotification("Formation non trouvée ou non éditable", "error");
+    return;
+  }
+  formationsHistorySection.style.display = 'none';
+  formationEditSection.style.display = 'block';
+  editFormationTitle.textContent = `Édition de la formation: ${formation.titre}`;
+  editTitre.value = formation.titre;
+  editDescription.value = formation.description;
+  editContentBlocksData = formation.content ? [...formation.content] : [];
+  currentEditFormationId = formationId;
+  editContentBlocks.innerHTML = '';
+  if (editContentBlocksData.length > 0) {
+    editContentBlocksData.forEach(block => {
+      addContentBlock(editContentBlocks, true);
+      const blockCard = editContentBlocks.lastElementChild;
+      if (block.type) {
+        const typeSelector = blockCard.querySelector('.block-type-selector');
+        typeSelector.value = block.type;
+        const event = new Event('change');
+        typeSelector.dispatchEvent(event);
+        switch (block.type) {
+          case 'text':
+            const textInput = blockCard.querySelector('.text-content-input');
+            if (textInput) textInput.value = block.content || '';
+            break;
+          case 'image':
+            const uploadInput = blockCard.querySelector(`#uploadcare-${blockCard.id.split('-')[1]}`);
+            if (uploadInput && block.content) {
+              const widget = uploadcare.Widget(uploadInput);
+              widget.value(block.content);
+            }
+            break;
+          case 'link':
+            const urlInput = blockCard.querySelector('.link-url-input');
+            const textInputLink = blockCard.querySelector('.link-text-input');
+            if (urlInput) urlInput.value = block.url || '';
+            if (textInputLink) textInputLink.value = block.text || '';
+            break;
+          case 'pdf':
+            break;
+          case 'quiz':
+            const questionInput = blockCard.querySelector('.quiz-question-input');
+            if (questionInput) questionInput.value = block.question || '';
+            if (block.options && block.options.length > 0) {
+              const optionsContainer = blockCard.querySelector('.quiz-options-container');
+              optionsContainer.innerHTML = '';
+              block.options.forEach((option, index) => {
+                const optionId = `option-${Date.now()}-${index}`;
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option-item flex items-center space-x-2';
+                optionElement.innerHTML = `
+                  <input type="text" class="quiz-option-input flex-1" value="${option.text}" required>
+                  <div class="flex items-center">
+                    <input type="radio" name="correct-${blockCard.id.split('-')[1]}" class="correct-option-radio" id="${optionId}" ${option.correct ? 'checked' : ''}>
+                    <label for="${optionId}" class="ml-1 text-sm text-gray-700">Bonne réponse</label>
+                  </div>
+                  <button type="button" class="remove-option-btn text-red-600">
+                    <i class="ri-delete-bin-line"></i>
+                  </button>
+                `;
+                optionsContainer.appendChild(optionElement);
+                const removeBtn = optionElement.querySelector('.remove-option-btn');
+                removeBtn.addEventListener('click', function() {
+                  optionElement.remove();
+                });
+              });
+            }
+            break;
+        }
+      }
+    });
+  }
+  updateMoveButtons(editContentBlocks);
+}
+
+function saveFormationEdit() {
+  if (!currentEditFormationId) return;
+  const titre = editTitre.value;
+  const description = editDescription.value;
+  if (!titre || !description || editContentBlocksData.length === 0) {
+    showNotification('Titre, description et au moins un bloc de contenu sont obligatoires', 'error');
+    return;
+  }
+  database.ref('formations/' + currentEditFormationId).update({
+    titre: titre,
+    description: description,
+    content: editContentBlocksData
+  })
+  .then(() => {
+    showNotification('Formation mise à jour avec succès', 'success');
+    loadFormations();
+    cancelEdit();
+  })
+  .catch(error => {
+    showNotification('Erreur lors de la mise à jour de la formation', 'error');
+  });
+}
+
+function cancelEdit() {
+  formationEditSection.style.display = 'none';
+  formationsHistorySection.style.display = 'block';
+  currentEditFormationId = null;
+  editContentBlocksData = [];
+}
+
+function checkAuthState() {
+  currentUserEmail = sessionStorage.getItem('userEmail');
+  if (!currentUserEmail) {
+    showNotification("Vous devez être connecté. Redirection...", "error");
+    setTimeout(() => {
+      window.location.href = "login";
+    }, 2000);
+    return;
+  }
+  professorName.textContent = currentUserEmail;
+  chargerDepartements(departementSelect);
+  loadFormations();
+  setTimeout(() => {
+    loadingOverlay.style.display = 'none';
+  }, 500);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  checkAuthState();
+  departementSelect.addEventListener('change', async function() {
+    if(this.value) {
+      await chargerCommunes(this.value, communeSelect);
+      nouvelleCommuneField.classList.add('hidden-field');
+      nouvelleCommuneInput.removeAttribute('required');
+    }
+  });
+  communeSelect.addEventListener('change', function() {
+    const showCommuneField = this.value === 'autre';
+    nouvelleCommuneField.classList.toggle('visible-field', showCommuneField);
+    nouvelleCommuneField.classList.toggle('hidden-field', !showCommuneField);
+    nouvelleCommuneInput.toggleAttribute('required', showCommuneField);
+    if(showCommuneField) nouvelleCommuneInput.focus();
+  });
+  btnOnline.addEventListener('click', function() {
+    btnOnline.classList.add('active');
+    btnProfessional.classList.remove('active');
+    onlineForm.classList.add('active');
+    professionalForm.classList.remove('active');
+  });
+  btnProfessional.addEventListener('click', function() {
+    btnProfessional.classList.add('active');
+    btnOnline.classList.remove('active');
+    professionalForm.classList.add('active');
+    onlineForm.classList.remove('active');
+  });
+  addBlockBtn.addEventListener('click', function() {
+    addContentBlock(contentBlocks);
+  });
+  addEditBlockBtn.addEventListener('click', function() {
+    addContentBlock(editContentBlocks, true);
+  });
+  onlineFormForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!currentUserEmail) {
+      showNotification("Vous devez être connecté pour créer une formation", "error");
+      return;
+    }
+    const titre = document.getElementById('onlineTitre').value;
+    const description = document.getElementById('onlineDescription').value;
+    if (!titre || !description || contentBlocksData.length === 0) {
+      showNotification('Titre, description et au moins un bloc de contenu sont obligatoires', 'error');
+      return;
+    }
+    const formData = {
+      type: 'online',
+      titre: titre,
+      description: description,
+      content: contentBlocksData,
+      annulee: false,
+      dateCreation: new Date().toISOString(),
+      prof: currentUserEmail
+    };
+    const newFormationRef = database.ref('formations').push();
+    newFormationRef.set(formData)
+      .then(() => {
+        showNotification('Formation en ligne créée avec succès', 'success');
+        onlineFormForm.reset();
+        contentBlocksData = [];
+        contentBlocks.innerHTML = "";
+        loadFormations();
+      })
+      .catch(error => {
+        showNotification('Erreur lors de la création de la formation en ligne', 'error');
+      });
+  });
+  professionalFormForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!currentUserEmail) {
+      showNotification("Vous devez être connecté pour créer une formation", "error");
+      return;
+    }
+    const titre = document.getElementById('proTitre').value;
+    const description = document.getElementById('proDescription').value;
+    const date = document.getElementById('proDate').value;
+    const heure = document.getElementById('proHeure').value;
+    const departement = departementSelect.value;
+    let commune = communeSelect.value;
+    const nouvelleCommune = nouvelleCommuneInput.value;
+    const participants = document.getElementById('proParticipants').value;
+    if (!titre || !description || !date || !heure || !departement || !participants) {
+      showNotification('Tous les champs obligatoires doivent être remplis', 'error');
+      return;
+    }
+  if (commune === 'autre') {
+    if (!nouvelleCommune) {
+      showNotification('Veuillez entrer le nom de la nouvelle commune', 'error');
+      return;
+    }
+    const success = await ajouterCommune(departement, nouvelleCommune);
+    if (!success) return;
+    commune = nouvelleCommune;
+  }
+  const lieu = `${commune}, ${departement}`;
+  const formData = {
+    type: 'professional',
+    titre: titre,
+    description: description,
+    date: date,
+    heure: heure,
+    lieu: lieu,
+    participants: participants,
+    annulee: false,
+    dateCreation: new Date().toISOString(),
+    prof: currentUserEmail
+  };
+  const newFormationRef = database.ref('formations').push();
+  newFormationRef.set(formData)
+    .then(() => {
+      showNotification('Formation professionnelle planifiée avec succès', 'success');
+      professionalFormForm.reset();
+      departementSelect.value = '';
+      communeSelect.innerHTML = '<option value="" disabled selected>Sélectionnez d\'abord un département</option>';
+      nouvelleCommuneField.classList.add('hidden-field');
+      nouvelleCommuneInput.value = '';
+      loadFormations();
+    })
+    .catch(error => {
+      showNotification('Erreur lors de la planification de la formation', 'error');
+    });
+});
+  tabAvenir.addEventListener('click', function() {
+    if (currentTab !== 'avenir') {
+      currentTab = 'avenir';
+      tabAvenir.classList.add('bg-primary', 'text-white');
+      tabAvenir.classList.remove('text-gray-700');
+      tabPassees.classList.remove('bg-primary', 'text-white');
+      tabPassees.classList.add('text-gray-700');
+      displayFormations();
+    }
+  });
+  tabPassees.addEventListener('click', function() {
+    if (currentTab !== 'passees') {
+      currentTab = 'passees';
+      tabPassees.classList.add('bg-primary', 'text-white');
+      tabPassees.classList.remove('text-gray-700');
+      tabAvenir.classList.remove('bg-primary', 'text-white');
+      tabAvenir.classList.add('text-gray-700');
+      displayFormations();
+    }
+  });
+  searchFormation.addEventListener('input', function() {
+    currentSearch = this.value.trim();
+    displayFormations();
+  });
+  confirmAction.addEventListener('click', function() {
+    if (actionCallback) {
+      actionCallback();
+    }
+    closeConfirmModal();
+  });
+  cancelAction.addEventListener('click', closeConfirmModal);
+  cancelEditBtn.addEventListener('click', cancelEdit);
+  cancelEditBtn2.addEventListener('click', cancelEdit);
+  saveEditBtn.addEventListener('click', saveFormationEdit);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">    
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rapports de Formation - FormaPro</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:'#4F46E5',secondary:'#8B5CF6',tertiary:'#0EA5E9'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9fafb;
+}
+.nav-link {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+.nav-link:hover {
+  background-color: #f1f5f9;
+}
+.nav-link.active {
+  background-color: #4F46E5;
+  color: white;
+}
+.notification {
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+.notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+.card-stat {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.card-stat:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+.stat-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+.stat-title {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+.chart-container {
+  height: 300px;
+}
+.page-section {
+  display: none;
+}
+.page-section.active {
+  display: block;
+}
+.progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #e5e7eb;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(79, 70, 229, 0.3);
+  border-radius: 50%;
+  border-top-color: #4F46E5;
+  animation: spin 1s ease-in-out infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.formation-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.formation-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+.report-editor {
+  min-height: 300px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+.report-editor:focus {
+  outline: none;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+.type-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.badge-online {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+.badge-professional {
+  background-color: #ede9fe;
+  color: #7c3aed;
+}
+.formation-filter {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.filter-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.filter-btn.active {
+  background-color: #4F46E5;
+  color: white;
+}
+.presence-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+.presence-modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+.presence-modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
+.presence-modal-header {
+  background: #4F46E5;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.presence-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+.search-container {
+  position: relative;
+  margin-bottom: 20px;
+}
+.search-container input {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 16px;
+}
+.search-container i {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+.student-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.student-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  border-radius: 8px;
+  background: #f9fafb;
+  transition: all 0.2s ease;
+}
+.student-item:hover {
+  background: #f3f4f6;
+}
+.student-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 15px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+}
+.student-name {
+  flex-grow: 1;
+  font-weight: 500;
+  color: #1f2937;
+}
+.presence-modal-footer {
+  padding: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  border-top: 1px solid #e5e7eb;
+}
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-cancel {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+.btn-save {
+  background: #10b981;
+  color: white;
+}
+.btn-save:hover {
+  background: #059669;
+}
+.no-students {
+  text-align: center;
+  padding: 30px;
+  color: #6b7280;
+}
+.no-students i {
+  font-size: 40px;
+  margin-bottom: 15px;
+  display: block;
+  color: #d1d5db;
+}
+.btn-presence {
+  background: #f97316;
+  color: white;
+  margin-top: 10px;
+}
+.btn-presence:hover {
+  background: #ea580c;
+}
+.btn-presence i {
+  margin-right: 5px;
+}
+.presence-summary {
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 20px;
+}
+.presence-summary h4 {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #4b5563;
+}
+.presence-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+.presence-list-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+}
+.presence-list-item:last-child {
+  border-bottom: none;
+}
+.presence-list-item i {
+  color: #10b981;
+  margin-right: 8px;
+}
+.student-phone {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+.student-status {
+  font-size: 0.875rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background-color: #e5e7eb;
+}
+.student-status.finished {
+  background-color: #dcfce7;
+  color: #166534;
+}
+.student-status.in-progress {
+  background-color: #fffbeb;
+  color: #854d0e;
+}
+.student-details {
+  flex-grow: 1;
+}
+</style>
+</head>
+<body class="min-h-screen pt-16 pb-24">
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+</div>
+<div id="presenceModal" class="presence-modal">
+  <div class="presence-modal-content">
+    <div class="presence-modal-header">
+      <h3 class="text-xl font-bold">Gestion des présences</h3>
+      <button id="closePresenceModal" class="text-white text-xl">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+    <div class="presence-modal-body">
+      <div class="search-container">
+        <input type="text" id="studentSearch" placeholder="Rechercher un élève...">
+        <i class="ri-search-line"></i>
+      </div>
+      <div id="studentList" class="student-list">
+      </div>
+    </div>
+    <div class="presence-modal-footer">
+      <button id="cancelPresence" class="btn btn-cancel">Annuler</button>
+      <button id="savePresence" class="btn btn-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+<nav class="fixed top-0 left-0 w-full bg-white shadow-sm z-10">
+  <div class="px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center">
+      <span class="text-xl font-['Pacifico'] text-primary">Orjeun</span>
+    </div>
+    <div class="flex items-center space-x-6">
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
+        <i class="ri-user-line text-gray-600"></i>
+      </div>
+      <span id="professorName" class="text-sm font-medium text-gray-700">Chargement...</span>
+    </div>
+  </div>
+</nav>
+<div class="container mx-auto px-4 pt-8 pb-24">
+  <div id="page-rapport" class="page-section active">
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-gray-800">Rapports de Formations</h1>
+      <p class="text-gray-600 mt-1">Générez des rapports détaillés pour vos formations</p>
+      <div class="h-1 w-20 bg-primary mt-3 rounded-full"></div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <div class="flex flex-col md:flex-row md:items-center justify-between">
+        <div class="flex items-center mb-4 md:mb-0">
+          <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mr-4">
+            <i class="ri-user-3-line text-2xl text-primary"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-gray-800" id="professor-name">Chargement...</h2>
+            <p class="text-gray-600" id="professor-email">email@exemple.com</p>
+          </div>
+        </div>
+        <div class="text-center">
+          <p class="text-2xl font-bold text-tertiary" id="formation-count">0</p>
+          <p class="text-sm text-gray-600">Formations disponibles</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Filtrer les formations</h3>
+      <div class="formation-filter">
+        <button class="filter-btn active" data-filter="all">Toutes les formations</button>
+        <button class="filter-btn" data-filter="online">Mes formations en ligne</button>
+        <button class="filter-btn" data-filter="professional">Formations professionnelles</button>
+      </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Sélectionnez une formation</h3>
+      <div id="formationsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      </div>
+      <div id="emptyState" class="hidden py-12 flex flex-col items-center justify-center">
+        <div class="w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 mb-4">
+          <i class="ri-calendar-line text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-gray-700 font-medium">Aucune formation disponible</h3>
+        <p class="text-gray-500 text-sm mt-1 text-center">Aucune formation ne correspond à vos critères</p>
+      </div>
+    </div>
+    <div id="reportForm" class="bg-white rounded-lg shadow-sm p-6 hidden">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Rapport pour <span id="selectedFormationName" class="text-primary"></span></h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Département</label>
+          <div class="px-4 py-3 bg-gray-50 rounded-button text-gray-700">
+            <span id="selectedDepartment"></span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date du rapport</label>
+          <div class="px-4 py-3 bg-gray-50 rounded-button text-gray-700">
+            <span id="reportDate"></span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Type de formation</label>
+          <div class="px-4 py-3 bg-gray-50 rounded-button text-gray-700">
+            <span id="formationType"></span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Professeur responsable</label>
+          <div class="px-4 py-3 bg-gray-50 rounded-button text-gray-700">
+            <span id="formationProfessor"></span>
+          </div>
+        </div>
+      </div>
+      <div id="presenceSummary" class="presence-summary hidden">
+        <h4 class="flex items-center">
+          <i class="ri-user-check-line mr-2 text-green-600"></i>
+          Élèves participants
+        </h4>
+        <div id="presenceList" class="presence-list">
+        </div>
+      </div>
+      <div>
+        <label for="reportContent" class="block text-sm font-medium text-gray-700 mb-1">Contenu du rapport</label>
+        <textarea 
+          id="reportContent" 
+          class="report-editor w-full" 
+          placeholder="Décrivez les points forts, les difficultés rencontrées, les résultats obtenus, les retours des participants, etc."
+          rows="12"
+        ></textarea>
+      </div>
+      <div class="mt-6 flex justify-end space-x-4">
+        <button id="cancelReport" class="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-button hover:bg-gray-200 transition-colors">
+          Annuler
+        </button>
+        <button id="submitReport" class="px-6 py-3 bg-green-600 text-white font-medium rounded-button hover:bg-green-700 transition-colors">
+          <span class="flex items-center justify-center">
+            <i class="ri-send-plane-line mr-2"></i>
+            Envoyer le rapport
+          </span>
+        </button>
+      </div>
+    </div>
+    <div id="reportConfirmation" class="bg-white rounded-lg shadow-sm p-6 hidden text-center">
+      <div class="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-6">
+        <i class="ri-check-line text-3xl text-green-600"></i>
+      </div>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">Rapport envoyé avec succès !</h3>
+      <p class="text-gray-600 mb-6">Votre rapport a été enregistré dans la base de données.</p>
+      <button id="newReport" class="px-6 py-3 bg-primary text-white font-medium rounded-button hover:bg-primary/90 transition-colors">
+        Créer un nouveau rapport
+      </button>
+    </div>
+  </div>
+  <div id="notification" class="notification mt-4 py-3 px-4 rounded-md hidden">
+    <div class="flex items-center">
+      <i id="notificationIcon" class="mr-2"></i>
+      <span id="notificationMessage"></span>
+    </div>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const firebaseConfig = {
+    apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+    authDomain: "orjeun-9dec4.firebaseapp.com",
+    databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+    projectId: "orjeun-9dec4",
+    storageBucket: "orjeun-9dec4.appspot.com",
+    messagingSenderId: "979782321937",
+    appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+    measurementId: "G-G316HCYF9E"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+  const userEmail = sessionStorage.getItem('userEmail');
+  if (!userEmail) {
+    window.location.href = "login";
+    return;
+  }
+  document.getElementById('professor-email').textContent = userEmail;
+  document.getElementById('professorName').textContent = userEmail;
+  const navLinks = document.querySelectorAll('.nav-link');
+  const pageSections = document.querySelectorAll('.page-section');
+  navLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      navLinks.forEach(l => l.classList.remove('active'));
+      this.classList.add('active');
+      pageSections.forEach(section => section.classList.remove('active'));
+      const targetPage = this.getAttribute('data-page');
+      document.getElementById(`page-${targetPage}`).classList.add('active');
+    });
+  });
+  let formations = [];
+  let professorName = "";
+  let professorDepartment = "";
+  let selectedFormation = null;
+  let currentFilter = "all";
+  let allStudents = [];
+  let selectedStudents = [];
+  function showNotification(message, type) {
+    const notification = document.getElementById('notification');
+    const notificationIcon = document.getElementById('notificationIcon');
+    const notificationMessage = document.getElementById('notificationMessage');
+    notification.classList.remove('hidden', 'bg-green-100', 'bg-red-100');
+    notificationIcon.classList.remove('ri-check-line', 'ri-error-warning-line', 'text-green-500', 'text-red-500');
+    if (type === 'success') {
+      notification.classList.add('bg-green-100');
+      notificationIcon.classList.add('ri-check-line', 'text-green-500');
+    } else {
+      notification.classList.add('bg-red-100');
+      notificationIcon.classList.add('ri-error-warning-line', 'text-red-500');
+    }
+    notificationMessage.textContent = message;
+    notification.classList.add('show');
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => notification.classList.add('hidden'), 300);
+    }, 3000);
+  }
+  function formatDate(dateString) {
+    if (!dateString) return 'Date non définie';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR');
+  }
+  async function loadProfessorData() {
+    try {
+      const confirmedMembersRef = database.ref('confirmed_adm_member');
+      const confirmedMembersSnapshot = await confirmedMembersRef.once('value');
+      const confirmedMembers = confirmedMembersSnapshot.val();
+      let professorFound = false;
+      for (const key in confirmedMembers) {
+        const member = confirmedMembers[key];
+        if (member.email === userEmail) {
+          professorFound = true;
+          professorName = member.nom || member.email.split('@')[0];
+          professorDepartment = member.departement || "Non spécifié";
+          document.getElementById('professor-name').textContent = professorName;
+          break;
+        }
+      }
+      if (!professorFound) {
+        showNotification("Utilisateur non trouvé. Redirection vers la page de connexion...", "error");
+        setTimeout(() => {
+          window.location.href = "login";
+        }, 2000);
+        return;
+      }
+      loadFormations();
+    } catch (error) {
+      console.error("Erreur lors du chargement des données du professeur:", error);
+      showNotification("Erreur lors du chargement des données du professeur", "error");
+    }
+  }
+  async function loadFormations() {
+    try {
+      const formationsRef = database.ref('formations');
+      const formationsSnapshot = await formationsRef.once('value');
+      const allFormations = formationsSnapshot.val();
+      formations = [];
+      for (const key in allFormations) {
+        const formation = allFormations[key];
+        const formationId = key;
+        const formationType = formation.type;
+        if (formationType === "online") {
+          if (formation.prof === userEmail) {
+            formations.push({
+              id: formationId,
+              ...formation,
+              isMine: true
+            });
+          }
+        } 
+        else if (formationType === "professional") {
+          const lieu = formation.lieu || "";
+          const lieuParts = lieu.split(", ");
+          const formationDepartment = lieuParts.length > 1 ? lieuParts[1] : "Inconnu";
+          if (formationDepartment === professorDepartment) {
+            formations.push({
+              id: formationId,
+              ...formation,
+              isMine: formation.prof === userEmail,
+              departement: formationDepartment
+            });
+          }
+        }
+      }
+      document.getElementById('formation-count').textContent = formations.length;
+      displayFormations();
+    } catch (error) {
+      console.error("Erreur lors du chargement des formations:", error);
+      showNotification("Erreur lors du chargement des formations", "error");
+    } finally {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+  }
+  function displayFormations() {
+    const formationsList = document.getElementById('formationsList');
+    const emptyState = document.getElementById('emptyState');
+    formationsList.innerHTML = '';
+    let filteredFormations = [];
+    if (currentFilter === "all") {
+      filteredFormations = formations;
+    } else if (currentFilter === "online") {
+      filteredFormations = formations.filter(f => f.type === "online");
+    } else if (currentFilter === "professional") {
+      filteredFormations = formations.filter(f => f.type === "professional");
+    }
+    if (filteredFormations.length === 0) {
+      emptyState.classList.remove('hidden');
+      return;
+    }
+    emptyState.classList.add('hidden');
+    filteredFormations.forEach(formation => {
+      const isOnline = formation.type === 'online';
+      const card = document.createElement('div');
+      card.className = 'formation-card bg-white border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-primary';
+      card.dataset.id = formation.id;
+      let buttonsHtml = `
+        <button class="w-full mt-4 bg-tertiary hover:bg-tertiary/90 text-white font-medium py-2 px-4 rounded-button transition-colors">
+          <span class="flex items-center justify-center">
+            <i class="ri-file-chart-line mr-2"></i>
+            Générer rapport
+          </span>
+        </button>
+      `;
+      if (!isOnline) {
+        buttonsHtml += `
+          <button class="w-full mt-2 btn-presence font-medium py-2 px-4 rounded-button">
+            <span class="flex items-center justify-center">
+              <i class="ri-user-check-line mr-2"></i>
+              Gérer la présence
+            </span>
+          </button>
+        `;
+      }
+      card.innerHTML = `
+        <div class="p-5">
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-semibold text-gray-800">${formation.titre}</h3>
+            <span class="type-badge ${isOnline ? 'badge-online' : 'badge-professional'}">
+              ${isOnline ? 'En ligne' : 'Professionnelle'}
+            </span>
+          </div>
+          <div class="flex items-center text-sm text-gray-500 mb-3">
+            <i class="ri-user-line mr-1"></i>
+            ${formation.isMine ? 'Votre formation' : `Par: ${formation.prof}`}
+          </div>
+          ${isOnline ? `
+            <div class="flex items-center text-sm text-gray-600 mb-3">
+              <div class="w-4 h-4 flex items-center justify-center mr-2">
+                <i class="ri-calendar-line"></i>
+              </div>
+              Créée le ${formatDate(formation.dateCreation)}
+            </div>
+          ` : `
+            <div class="space-y-1 mb-3">
+              <div class="flex items-center text-sm text-gray-600">
+                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                  <i class="ri-calendar-line"></i>
+                </div>
+                ${formation.date ? formatDate(formation.date) : 'Date non définie'} à ${formation.heure || '--:--'}
+              </div>
+              <div class="flex items-center text-sm text-gray-600">
+                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                  <i class="ri-map-pin-line"></i>
+                </div>
+                ${formation.lieu || 'Lieu non défini'}
+              </div>
+            </div>
+          `}
+          <p class="text-sm text-gray-600 line-clamp-2">${formation.description || 'Aucune description disponible'}</p>
+          ${buttonsHtml}
+        </div>
+      `;
+      formationsList.appendChild(card);
+      card.querySelector('button:nth-of-type(1)').addEventListener('click', function(e) {
+        e.stopPropagation();
+        selectFormation(formation);
+      });
+      if (!isOnline) {
+        card.querySelector('button.btn-presence').addEventListener('click', function(e) {
+          e.stopPropagation();
+          openPresenceModal(formation);
+        });
+      }
+      card.addEventListener('click', function() {
+        selectFormation(formation);
+      });
+    });
+  }
+  async function selectFormation(formation) {
+    selectedFormation = formation;
+    document.getElementById('selectedFormationName').textContent = formation.titre;
+    document.getElementById('selectedDepartment').textContent = professorDepartment;
+    document.getElementById('formationType').textContent = formation.type === "online" ? "Formation en ligne" : "Formation professionnelle";
+    document.getElementById('formationProfessor').textContent = formation.prof;
+    const now = new Date();
+    document.getElementById('reportDate').textContent = now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR');
+    if (formation.type === "professional") {
+      await loadPresencesForFormation(formation.id);
+    } else {
+      await loadOnlineParticipants(formation.id, formation.titre);
+    }
+    document.getElementById('reportForm').classList.remove('hidden');
+    document.getElementById('reportForm').scrollIntoView({ behavior: 'smooth' });
+  }
+  async function loadPresencesForFormation(formationId) {
+    try {
+      const presenceRef = database.ref(`Formation/${formationId}/Presence`);
+      const presenceSnapshot = await presenceRef.once('value');
+      const presences = presenceSnapshot.val() || {};
+      const presenceList = document.getElementById('presenceList');
+      const presenceSummary = document.getElementById('presenceSummary');
+      presenceList.innerHTML = '';
+      if (Object.keys(presences).length === 0) {
+        presenceSummary.classList.add('hidden');
+        return;
+      }
+      presenceSummary.classList.remove('hidden');
+      for (const studentId in presences) {
+        const student = presences[studentId];
+        const presenceItem = document.createElement('div');
+        presenceItem.className = 'presence-list-item';
+        presenceItem.innerHTML = `
+          <div class="flex justify-between w-full">
+            <div>
+              <span class="font-medium">${student.nom}</span>
+              <div class="student-phone">${student.telephone}</div>
+            </div>
+          </div>
+        `;
+        presenceList.appendChild(presenceItem);
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des présences:", error);
+    }
+  }
+  async function getOnlineParticipants(formationId) {
+    try {
+      const membersRef = database.ref('membres');
+      const membersSnapshot = await membersRef.once('value');
+      const members = membersSnapshot.val();
+      const participants = [];
+      for (const key in members) {
+        const member = members[key];
+        if (member.cours && member.cours[formationId]) {
+          const isFinished = member.cours_finished && member.cours_finished[formationId];
+          participants.push({
+            id: key,
+            nom: member.nom,
+            telephone: member.telephone || 'Non renseigné',
+            finished: isFinished
+          });
+        }
+      }
+      return participants;
+    } catch (error) {
+      console.error("Erreur lors du chargement des participants en ligne:", error);
+      return [];
+    }
+  }
+  async function loadOnlineParticipants(formationId) {
+    const participants = await getOnlineParticipants(formationId);
+    displayOnlineParticipants(participants);
+  }
+  function displayOnlineParticipants(participants) {
+    const presenceList = document.getElementById('presenceList');
+    const presenceSummary = document.getElementById('presenceSummary');
+    presenceList.innerHTML = '';
+    if (participants.length === 0) {
+      presenceSummary.classList.remove('hidden');
+      presenceSummary.querySelector('h4').innerHTML = `
+        <i class="ri-user-check-line mr-2 text-green-600"></i>
+        Participants à la formation en ligne
+      `;
+      presenceList.innerHTML = '<div class="text-center text-gray-500 py-4">Aucun participant inscrit à cette formation en ligne</div>';
+      return;
+    }
+    presenceSummary.classList.remove('hidden');
+    presenceSummary.querySelector('h4').innerHTML = `
+      <i class="ri-user-check-line mr-2 text-green-600"></i>
+      Participants à la formation en ligne
+    `;
+    participants.forEach(participant => {
+      const presenceItem = document.createElement('div');
+      presenceItem.className = 'presence-list-item';
+      presenceItem.innerHTML = `
+        <div class="flex justify-between w-full items-center">
+          <div class="student-details">
+            <span class="font-medium">${participant.nom}</span>
+            <div class="student-phone">${participant.telephone}</div>
+          </div>
+          <span class="student-status ${participant.finished ? 'finished' : 'in-progress'}">
+            ${participant.finished ? 'Terminé' : 'En cours'}
+          </span>
+        </div>
+      `;
+      presenceList.appendChild(presenceItem);
+    });
+  }
+  document.getElementById('cancelReport').addEventListener('click', function() {
+    document.getElementById('reportForm').classList.add('hidden');
+    selectedFormation = null;
+  });
+  document.getElementById('submitReport').addEventListener('click', async function() {
+    const reportContent = document.getElementById('reportContent').value.trim();
+    if (!reportContent) {
+      showNotification('Veuillez saisir le contenu du rapport', 'error');
+      return;
+    }
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    try {
+      let presenceData = {};
+      if (selectedFormation.type === "professional") {
+        const presenceRef = database.ref(`Formation/${selectedFormation.id}/Presence`);
+        const presenceSnapshot = await presenceRef.once('value');
+        presenceData = presenceSnapshot.val() || {};
+      } else {
+        // Pour les formations en ligne, on récupère les participants automatiquement
+        const participants = await getOnlineParticipants(selectedFormation.id);
+        participants.forEach(participant => {
+          presenceData[participant.id] = {
+            nom: participant.nom,
+            telephone: participant.telephone
+          };
+        });
+      }
+      const reportData = {
+        professeur: professorName,
+        email: userEmail,
+        formationId: selectedFormation.id,
+        formationTitre: selectedFormation.titre,
+        departement: professorDepartment,
+        contenu: reportContent,
+        date: new Date().toISOString(),
+        typeFormation: selectedFormation.type,
+        presences: presenceData
+      };
+      const newReportRef = database.ref('rapports').push();
+      await newReportRef.set(reportData);
+      document.getElementById('reportForm').classList.add('hidden');
+      document.getElementById('reportConfirmation').classList.remove('hidden');
+    } catch (error) {
+      console.error('Erreur lors de l\'enregistrement du rapport:', error);
+      showNotification('Erreur lors de l\'enregistrement du rapport', 'error');
+    } finally {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+  });
+  document.getElementById('newReport').addEventListener('click', function() {
+    document.getElementById('reportConfirmation').classList.add('hidden');
+    document.getElementById('reportContent').value = '';
+    selectedFormation = null;
+  });
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  filterButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      filterButtons.forEach(btn => btn.classList.remove('active'));
+      this.classList.add('active');
+      currentFilter = this.dataset.filter;
+      displayFormations();
+    });
+  });
+  async function loadAllStudents() {
+    try {
+      const studentsRef = database.ref('membres');
+      const studentsSnapshot = await studentsRef.once('value');
+      const students = studentsSnapshot.val();
+      allStudents = [];
+      for (const key in students) {
+        const student = students[key];
+        if (student.nom) {
+          allStudents.push({
+            id: key,
+            nom: student.nom,            
+            email: student.email || '',
+            telephone: student.telephone || 'Non renseigné'
+          });
+        }
+      }
+      allStudents.sort((a, b) => a.nom.localeCompare(b.nom));
+      return allStudents;
+    } catch (error) {
+      console.error("Erreur lors du chargement des élèves:", error);
+      showNotification("Erreur lors du chargement des élèves", "error");
+      return [];
+    }
+  }
+  async function openPresenceModal(formation) {
+    selectedFormation = formation;
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    const students = await loadAllStudents();
+    document.getElementById('loadingOverlay').style.display = 'none';
+    const presenceRef = database.ref(`Formation/${formation.id}/Presence`);
+    const presenceSnapshot = await presenceRef.once('value');
+    const currentPresence = presenceSnapshot.val() || {};
+    selectedStudents = Object.keys(currentPresence);
+    document.querySelector('.presence-modal-header h3').textContent = `Gestion des présences: ${formation.titre}`;
+    displayStudents(students, currentPresence);
+    document.getElementById('presenceModal').classList.add('active');
+  }
+  function displayStudents(students, currentPresence) {
+    const studentList = document.getElementById('studentList');
+    studentList.innerHTML = '';
+    if (students.length === 0) {
+      studentList.innerHTML = `
+        <div class="no-students">
+          <i class="ri-user-search-line"></i>
+          <p>Aucun élève inscrit sur le site</p>
+        </div>
+      `;
+      return;
+    }
+    students.forEach(student => {
+      const studentId = student.id;
+      const fullName = student.nom;
+      const isPresent = selectedStudents.includes(studentId);
+      const studentItem = document.createElement('div');
+      studentItem.className = 'student-item';
+      studentItem.innerHTML = `
+        <input type="checkbox" id="student-${studentId}" ${isPresent ? 'checked' : ''}>
+        <div class="flex flex-col">
+          <label for="student-${studentId}" class="student-name">${fullName}</label>
+          <span class="text-xs text-gray-500">${student.telephone}</span>
+        </div>
+      `;
+      studentList.appendChild(studentItem);
+      const checkbox = studentItem.querySelector('input');
+      checkbox.addEventListener('change', function() {
+        if (this.checked) {
+          if (!selectedStudents.includes(studentId)) {
+            selectedStudents.push(studentId);
+          }
+        } else {
+          const index = selectedStudents.indexOf(studentId);
+          if (index > -1) {
+            selectedStudents.splice(index, 1);
+          }
+        }
+      });
+    });
+    document.getElementById('studentSearch').addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const items = studentList.querySelectorAll('.student-item');
+      items.forEach(item => {
+        const name = item.querySelector('.student-name').textContent.toLowerCase();
+        if (name.includes(searchTerm)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
+  document.getElementById('closePresenceModal').addEventListener('click', closePresenceModal);
+  document.getElementById('cancelPresence').addEventListener('click', closePresenceModal);
+  function closePresenceModal() {
+    document.getElementById('presenceModal').classList.remove('active');
+    document.getElementById('studentSearch').value = '';
+    selectedStudents = [];
+  }
+  document.getElementById('savePresence').addEventListener('click', async function() {
+    if (!selectedFormation) return;
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    try {
+      const formationId = selectedFormation.id;
+      const presenceData = {};
+      selectedStudents.forEach(studentId => {
+        const student = allStudents.find(s => s.id === studentId);
+        if (student) {
+          presenceData[studentId] = {
+            nom: student.nom,
+            telephone: student.telephone || 'Non renseigné'
+          };
+        }
+      });
+      await database.ref(`Formation/${formationId}/Presence`).set(presenceData);
+      closePresenceModal();
+      if (document.getElementById('reportForm').classList.contains('hidden') === false) {
+        await loadPresencesForFormation(formationId);
+      }
+      showNotification("Présences enregistrées avec succès!", "success");
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement des présences:", error);
+      showNotification("Erreur lors de l'enregistrement des présences", "error");
+    } finally {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+  });
+  loadProfessorData();
+});
+</script>
+</body>
+</html>

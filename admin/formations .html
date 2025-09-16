@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Créer une formation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f2f2f7; margin: 0; padding: 2rem; }
+    .container { max-width: 900px; margin: auto; background: #fff; border-radius: 12px; padding: 2rem; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+    h1 { text-align: center; margin-bottom: 2rem; }
+    label { display: block; margin-top: 1rem; font-weight: 600; }
+    input, textarea, select, button {
+      width: 100%; padding: 10px; margin-top: 0.5rem;
+      border: 1px solid #ccc; border-radius: 6px;
+      font-size: 16px;
+    }
+    button { background: #4CAF50; color: white; cursor: pointer; margin-top: 1.5rem; }
+    button:hover { background: #45a049; }
+    .quiz-section, .pdf-list { margin-top: 1.5rem; }
+    .quiz-item { background: #f9f9f9; padding: 10px; margin-top: 10px; border-radius: 6px; }
+    .flex { display: flex; gap: 10px; }
+    .flex input { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Créer une nouvelle formation</h1>
+
+    <label for="titre">Titre de la formation</label>
+    <input type="text" id="titre" placeholder="Ex: Formation Word Avancé">
+
+    <label for="description">Description</label>
+    <textarea id="description" rows="4" placeholder="Décrivez brièvement la formation..."></textarea>
+
+    <label>Documents PDF</label>
+    <input type="hidden" role="uploadcare-uploader" data-multiple data-clearable />
+
+    <div class="pdf-list" id="pdfList"></div>
+
+    <div class="quiz-section">
+      <h3>Ajouter des quiz après une page</h3>
+
+      <label>Page du PDF</label>
+      <input type="number" id="pageQuiz" placeholder="Ex: 3">
+
+      <label>Question</label>
+      <input type="text" id="question" placeholder="Ex: Quelle est la bonne réponse ?">
+
+      <div class="flex">
+        <input type="text" id="optionA" placeholder="Option A">
+        <input type="text" id="optionB" placeholder="Option B">
+        <input type="text" id="optionC" placeholder="Option C">
+      </div>
+
+      <label>Bonne réponse</label>
+      <select id="bonneReponse">
+        <option value="">Sélectionner</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+      </select>
+
+      <button onclick="ajouterQuiz()">+ Ajouter ce quiz</button>
+
+      <div id="quizList"></div>
+    </div>
+
+    <button onclick="enregistrerCours()">✅ Enregistrer la formation</button>
+  </div>
+
+  <script>
+    let fichiersPDF = [];
+    let quizParPage = {};
+
+    uploadcare.Widget('[role=uploadcare-uploader]').onUploadComplete(fileInfo => {
+      fichiersPDF.push(fileInfo.cdnUrl);
+      document.getElementById("pdfList").innerHTML += `<div>📄 ${fileInfo.name}</div>`;
+    });
+
+    function ajouterQuiz() {
+      const page = document.getElementById("pageQuiz").value;
+      const q = document.getElementById("question").value;
+      const a = document.getElementById("optionA").value;
+      const b = document.getElementById("optionB").value;
+      const c = document.getElementById("optionC").value;
+      const r = document.getElementById("bonneReponse").value;
+
+      if (!page || !q || !a || !b || !c || !r) {
+        alert("Remplis tous les champs pour le quiz.");
+        return;
+      }
+
+      if (!quizParPage[page]) quizParPage[page] = [];
+      quizParPage[page].push({
+        question: q,
+        options: { A: a, B: b, C: c },
+        bonneReponse: r
+      });
+
+      document.getElementById("quizList").innerHTML += `
+        <div class="quiz-item">
+          <strong>Page ${page}</strong><br>
+          ${q} <br>
+          A: ${a}, B: ${b}, C: ${c} — <b>Bonne réponse: ${r}</b>
+        </div>`;
+
+      // reset champs
+      document.getElementById("pageQuiz").value = "";
+      document.getElementById("question").value = "";
+      document.getElementById("optionA").value = "";
+      document.getElementById("optionB").value = "";
+      document.getElementById("optionC").value = "";
+      document.getElementById("bonneReponse").value = "";
+    }
+
+    function enregistrerCours() {
+      const titre = document.getElementById("titre").value;
+      const description = document.getElementById("description").value;
+
+      if (!titre || !description || fichiersPDF.length === 0) {
+        alert("Le titre, la description et au moins un PDF sont obligatoires.");
+        return;
+      }
+
+      const id = "formation_" + Date.now(); // ID unique
+
+      const data = {
+        id: id,
+        titre: titre,
+        description: description,
+        documents: fichiersPDF,
+        quizParPage: quizParPage
+      };
+
+      // Ici, tu peux remplacer localStorage par Firebase si tu veux
+      localStorage.setItem(`formation/${id}`, JSON.stringify(data));
+
+      alert("Formation enregistrée !");
+      console.log(data);
+    }
+  </script>
+</body>
+</html>

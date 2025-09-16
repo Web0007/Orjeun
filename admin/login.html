@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orjeun - Connexion</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981'
+                    },
+                    borderRadius: {
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9fafb;
+            font-family: 'Inter', sans-serif;
+        }
+        .auth-card { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col">
+    <div class="w-full h-full flex flex-col items-center justify-center px-4 py-12">
+        <div class="w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="font-['Pacifico'] text-3xl text-primary">Orjeun</h1>
+                <p class="text-gray-500 mt-2">Bienvenue sur votre plateforme</p>
+            </div>
+            <div class="auth-card bg-white rounded-lg shadow-md p-6">
+                <form id="login-form" class="space-y-5">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="email" class="w-full h-10 pl-3 border border-gray-300 rounded-button focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                        <input type="password" id="password" class="w-full h-10 pl-3 border border-gray-300 rounded-button focus:ring-2 focus:ring-primary focus:border-primary" required>
+                    </div>
+                    <button type="button" id="login-btn" class="w-full bg-primary text-white py-2.5 rounded-button flex items-center justify-center">
+                        <span>Se connecter</span>
+                        <i class="ri-arrow-right-line ri-lg ml-2"></i>
+                    </button>
+                </form>
+                <div id="login-error" class="mt-4 text-red-500 text-sm hidden"></div>
+                <div id="login-success" class="mt-4 text-green-500 text-sm hidden"></div>
+            </div>
+            
+            <!-- Nouveau bloc ajouté ici -->
+            <div class="mt-6 text-center text-sm">
+                <p class="text-gray-600 mb-3">
+                    Si vous n'avez pas encore téléchargé l'appli, veuillez 
+                    <a href="Orjeun Gestion.apk" class="text-primary font-medium">cliquer ici</a> 
+                    et le téléchargement débutera instantanément.
+                </p>
+                <p class="text-gray-600">
+                    Si vous n'êtes pas encore inscrit, 
+                    <a href="register.html" class="text-primary font-medium">cliquez ici</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-5 rounded-lg flex flex-col items-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+            <p class="mt-3 text-gray-700">Chargement en cours...</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+            authDomain: "orjeun-9dec4.firebaseapp.com",
+            databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+            projectId: "orjeun-9dec4",
+            storageBucket: "orjeun-9dec4.appspot.com",
+            messagingSenderId: "979782321937",
+            appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+            measurementId: "G-G316HCYF9E"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const loginBtn = document.getElementById('login-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loginError = document.getElementById('login-error');
+        const loginSuccess = document.getElementById('login-success');
+
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        loginBtn.addEventListener('click', async () => {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!email || !password) {
+                loginError.textContent = 'Veuillez remplir tous les champs';
+                loginError.classList.remove('hidden');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const confirmedSnapshot = await db.ref('confirmed_adm_member').orderByChild('email').equalTo(email).once('value');
+                
+                if (confirmedSnapshot.exists()) {
+                    let isValid = false;
+                    confirmedSnapshot.forEach(child => {
+                        if (child.val().password === password) {
+                            isValid = true;
+                            localStorage.setItem('userRole', child.val().role);
+                            
+                            sessionStorage.setItem('userEmail', email);
+                            sessionStorage.setItem('userPassword', password);
+                            localStorage.setItem('userEmail', email);
+                            localStorage.setItem('userPassword', password);
+                            
+                            const role = child.val().role;
+                            if (role === 'vendeur') {
+                                window.location.href = 'market';
+                            } else if (role === 'professeur') {
+                                window.location.href = 'prof';
+                            } else {
+                                window.location.href = 'adm';
+                            }
+                        }
+                    });
+                    
+                    if (!isValid) throw new Error('Mot de passe incorrect');
+                    return;
+                }
+
+                const unconfirmedSnapshot = await db.ref('unconfirmed_admin_member').orderByChild('email').equalTo(email).once('value');
+                
+                if (unconfirmedSnapshot.exists()) {
+                    throw new Error('Votre compte est en attente de confirmation');
+                }
+
+                throw new Error('Identifiants incorrects');
+
+            } catch (error) {
+                loginError.textContent = error.message;
+                loginError.classList.remove('hidden');
+                loginSuccess.classList.add('hidden');
+            } finally {
+                hideLoading();
+            }
+        });
+    </script>
+</body>
+</html>

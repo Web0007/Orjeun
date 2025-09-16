@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ajouter les régions d'Haïti dans Firebase Realtime Database</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h2>Insertion des départements et communes d’Haïti</h2>
+  <button onclick="enregistrer()">Enregistrer</button>
+
+  <script>
+    // Configuration Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+      authDomain: "orjeun-9dec4.firebaseapp.com",
+      databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+      projectId: "orjeun-9dec4",
+      storageBucket: "orjeun-9dec4.appspot.com",
+      messagingSenderId: "979782321937",
+      appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+      measurementId: "G-G316HCYF9E"
+    };
+
+    // Initialisation Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const regions = {
+      "Ouest": ["Port-au-Prince", "Carrefour", "Delmas", "Pétion-Ville", "Cité Soleil", "Tabarre", "Kenscoff", "Croix-des-Bouquets", "Gressier", "Léogâne", "Arcahaie", "Cabaret", "Fonds-Verrettes", "Cornillon"],
+      "Nord": ["Cap-Haïtien", "Limonade", "Quartier-Morin", "Plaine-du-Nord", "Limbé", "Plaisance", "Grande-Rivière-du-Nord", "Milot", "Borgne", "Port-Margot", "Acul-du-Nord", "Bahon"],
+      "Sud": ["Les Cayes", "Camp-Perrin", "Torbeck", "Chantal", "Port-Salut", "Cavaillon", "Maniche", "Saint-Louis-du-Sud", "Arniquet", "Roche-à-Bateau", "Côteaux", "Port-à-Piment", "Tiburon"],
+      "Artibonite": ["Gonaïves", "Saint-Marc", "Dessalines", "Gros-Morne", "Anse-Rouge", "L'Estère", "Marmelade", "Ennery", "Verrettes", "Petite-Rivière-de-l'Artibonite", "La Chapelle", "Saint-Michel-de-l’Attalaye"],
+      "Centre": ["Hinche", "Mirebalais", "Lascahobas", "Belladère", "Thomonde", "Cerca-La-Source", "Cerca-Carvajal", "Boucan-Carré", "Maïssade", "Thomassique"],
+      "Nord-Est": ["Fort-Liberté", "Ouanaminthe", "Trou-du-Nord", "Terrier-Rouge", "Caracol", "Ferrier", "Mont-Organisé", "Capotille"],
+      "Nord-Ouest": ["Port-de-Paix", "Saint-Louis-du-Nord", "Jean-Rabel", "Bassin-Bleu", "Chansolme", "Anse-à-Foleur", "Môle-Saint-Nicolas", "Baie-de-Henne", "Bombardopolis"],
+      "Sud-Est": ["Jacmel", "Marigot", "Cayes-Jacmel", "Bainet", "Belle-Anse", "Anse-à-Pitres", "Grand-Gosier"],
+      "Grande-Anse": ["Jérémie", "Moron", "Chambellan", "Roseaux", "Pestel", "Corail", "Anse-d’Hainault", "Bonbon", "Dame-Marie", "Les Irois", "Abricots"],
+      "Nippes": ["Miragoâne", "Anse-à-Veau", "Baradères", "Petit-Trou-de-Nippes", "Plaisance-du-Sud", "Fonds-des-Nègres", "Paillant", "Arnaud", "L'Asile"]
+    };
+
+    function enregistrer() {
+      const regionRef = db.ref("region_nationale");
+      for (const [departement, communes] of Object.entries(regions)) {
+        const data = {};
+        communes.forEach(commune => {
+          data[commune] = true;
+        });
+
+        regionRef.child(departement).set(data)
+          .then(() => {
+            console.log(`Département ${departement} ajouté.`);
+          })
+          .catch((error) => {
+            console.error(`Erreur pour ${departement} :`, error);
+          });
+      }
+      alert("Toutes les données ont été enregistrées !");
+    }
+  </script>
+</body>
+</html>

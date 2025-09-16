@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - Rapports de Formations</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#8B5CF6',
+                        tertiary: '#0EA5E9',
+                        dark: '#1f2937',
+                        light: '#f9fafb'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+        .nav-link {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            background-color: #f1f5f9;
+        }
+        .nav-link.active {
+            background-color: #4F46E5;
+            color: white;
+        }
+        .card-stat {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .card-stat:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+        }
+        .stat-title {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(79, 70, 229, 0.3);
+            border-radius: 50%;
+            border-top-color: #4F46E5;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .report-card {
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border-left: 4px solid #4F46E5;
+        }
+        .report-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge-online {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+        .badge-professional {
+            background-color: #ede9fe;
+            color: #7c3aed;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-btn.active {
+            background-color: #4F46E5;
+            color: white;
+        }
+        .notification {
+            transform: translateY(-10px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .report-content {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        .department-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: #e0e7ff;
+            color: #4F46E5;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .presence-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .presence-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .presence-item:last-child {
+            border-bottom: none;
+        }
+        .presence-item i {
+            margin-right: 8px;
+            color: #10b981;
+        }
+        .presence-count {
+            font-weight: 600;
+            margin-top: 5px;
+            color: #4b5563;
+        }
+        .student-status {
+            font-size: 0.875rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: #e5e7eb;
+        }
+        .student-status.finished {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .student-status.in-progress {
+            background-color: #fffbeb;
+            color: #854d0e;
+        }
+        .student-details {
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen pt-16 pb-24 bg-gray-50">
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <nav class="fixed top-0 left-0 w-full bg-white shadow-sm z-10">
+        <div class="px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center">
+                <span class="text-xl font-bold text-primary">Administration Orjeun</span>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white">
+                    <i class="ri-admin-line"></i>
+                </div>
+                <span id="adminName" class="text-sm font-medium text-gray-700">Administrateur</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 pt-8 pb-24">
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-800">Rapports de Formations</h1>
+            <p class="text-gray-600 mt-1">Consultez les rapports soumis par les professeurs</p>
+            <div class="h-1 w-20 bg-primary mt-3 rounded-full"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <div class="card-stat p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="stat-value text-gray-800" id="totalReports">0</div>
+                        <div class="stat-title">Rapports reçus</div>
+                    </div>
+                    <div class="stat-icon bg-blue-100 text-primary">
+                        <i class="ri-file-list-line"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-stat p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="stat-value text-gray-800" id="onlineReports">0</div>
+                        <div class="stat-title">Formations en ligne</div>
+                    </div>
+                    <div class="stat-icon bg-purple-100 text-secondary">
+                        <i class="ri-computer-line"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-stat p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="stat-value text-gray-800" id="professionalReports">0</div>
+                        <div class="stat-title">Formations professionnelles</div>
+                    </div>
+                    <div class="stat-icon bg-cyan-100 text-tertiary">
+                        <i class="ri-building-line"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-stat p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="stat-value text-gray-800" id="departmentsCount">0</div>
+                        <div class="stat-title">Départements</div>
+                    </div>
+                    <div class="stat-icon bg-green-100 text-green-600">
+                        <i class="ri-map-pin-line"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-stat p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="stat-value text-gray-800" id="totalPresences">0</div>
+                        <div class="stat-title">Présences enregistrées</div>
+                    </div>
+                    <div class="stat-icon bg-yellow-100 text-yellow-600">
+                        <i class="ri-user-check-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex flex-col md:flex-row md:items-center gap-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Filtrer les rapports</h3>
+                    
+                    <div class="flex flex-wrap gap-2">
+                        <button class="filter-btn active" data-filter="all">Tous</button>
+                        <button class="filter-btn" data-filter="online">En ligne</button>
+                        <button class="filter-btn" data-filter="professional">Professionnelles</button>
+                        <button class="filter-btn" data-filter="recent">7 derniers jours</button>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Rechercher un rapport..." 
+                        class="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    >
+                    <i class="ri-search-line absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-800">Rapports récents</h3>
+                <div class="flex items-center text-sm text-gray-500">
+                    <i class="ri-sort-desc mr-1"></i>
+                    Trier par: 
+                    <select id="sortSelect" class="ml-2 bg-transparent border-0 focus:outline-none focus:ring-0">
+                        <option value="recent">Plus récent</option>
+                        <option value="oldest">Plus ancien</option>
+                        <option value="prof">Professeur</option>
+                        <option value="department">Département</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="reportsList" class="space-y-4">
+            </div>
+            
+            <div id="emptyState" class="hidden py-12 flex flex-col items-center justify-center">
+                <div class="w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 mb-4">
+                    <i class="ri-file-text-line text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-gray-700 font-medium">Aucun rapport disponible</h3>
+                <p class="text-gray-500 text-sm mt-1 text-center">Aucun rapport ne correspond à vos critères de recherche</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800" id="modalFormationTitle"></h3>
+                        <div class="flex items-center mt-2">
+                            <span class="type-badge mr-2" id="modalFormationTypeBadge"></span>
+                            <span class="department-tag" id="modalDepartment"></span>
+                        </div>
+                    </div>
+                    <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="ri-close-line text-2xl"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-500 mb-1">Professeur</div>
+                        <div class="font-medium" id="modalProfessor"></div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-500 mb-1">Date du rapport</div>
+                        <div class="font-medium" id="modalReportDate"></div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-500 mb-1">Email</div>
+                        <div class="font-medium" id="modalEmail"></div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-500 mb-1">Date de la formation</div>
+                        <div class="font-medium" id="modalFormationDate"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">Contenu du rapport</h4>
+                    <div id="modalReportContent" class="report-content bg-gray-50 rounded-lg p-5"></div>
+                </div>
+                
+                <div class="mb-4">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3" id="presenceTitle">Liste des présences</h4>
+                    <div id="presenceList" class="presence-list">
+                    </div>
+                    <div class="presence-count" id="presenceCount">0 élèves présents</div>
+                </div>
+                
+                <div class="flex justify-end mt-6">
+                    <button id="deleteReport" class="px-4 py-2 bg-red-100 text-red-700 font-medium rounded-button hover:bg-red-200 transition-colors mr-3">
+                        <i class="ri-delete-bin-line mr-2"></i> Supprimer
+                    </button>
+                    <button id="downloadReport" class="px-4 py-2 bg-primary text-white font-medium rounded-button hover:bg-primary/90 transition-colors">
+                        <i class="ri-download-line mr-2"></i> Télécharger
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="fixed top-4 right-4 notification py-3 px-4 rounded-md hidden z-50">
+        <div class="flex items-center">
+            <i id="notificationIcon" class="mr-2"></i>
+            <span id="notificationMessage"></span>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+                authDomain: "orjeun-9dec4.firebaseapp.com",
+                databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+                projectId: "orjeun-9dec4",
+                storageBucket: "orjeun-9dec4.appspot.com",
+                messagingSenderId: "979782321937",
+                appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+                measurementId: "G-G316HCYF9E"
+            };
+
+            firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
+                       
+            let reports = [];
+            let currentFilter = "all";
+            let currentSort = "recent";
+            let selectedReport = null;
+            let departments = new Set();
+            
+            function showNotification(message, type) {
+                const notification = document.getElementById('notification');
+                const notificationIcon = document.getElementById('notificationIcon');
+                const notificationMessage = document.getElementById('notificationMessage');
+                
+                notification.classList.remove('hidden', 'bg-green-100', 'bg-red-100', 'text-green-800', 'text-red-800');
+                notificationIcon.classList.remove('ri-check-line', 'ri-error-warning-line', 'text-green-500', 'text-red-500');
+                
+                if (type === 'success') {
+                    notification.classList.add('bg-green-100', 'text-green-800');
+                    notificationIcon.classList.add('ri-check-line', 'text-green-500');
+                } else {
+                    notification.classList.add('bg-red-100', 'text-red-800');
+                    notificationIcon.classList.add('ri-error-warning-line', 'text-red-500');
+                }
+                
+                notificationMessage.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.classList.add('hidden'), 300);
+                }, 3000);
+            }
+            
+            function formatDate(dateString) {
+                if (!dateString) return 'Date non définie';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            
+            async function loadReports() {
+                try {
+                    const reportsRef = database.ref('rapports');
+                    const reportsSnapshot = await reportsRef.once('value');
+                    const reportsData = reportsSnapshot.val();
+                    
+                    reports = [];
+                    departments.clear();
+                    
+                    if (reportsData) {
+                        for (const key in reportsData) {
+                            const report = reportsData[key];
+                            report.id = key;
+                            reports.push(report);
+                            
+                            if (report.departement) {
+                                departments.add(report.departement);
+                            }
+                        }
+                    } else {
+                        showNotification("Aucun rapport trouvé dans la base de données", "info");
+                    }
+                    
+                    updateStatistics();
+                    displayReports();
+                    
+                } catch (error) {
+                    console.error("Erreur lors du chargement des rapports:", error);
+                    showNotification("Erreur lors du chargement des rapports: " + error.message, "error");
+                } finally {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }
+            }
+            
+            function updateStatistics() {
+                document.getElementById('totalReports').textContent = reports.length;
+                
+                const onlineCount = reports.filter(r => r.typeFormation === "online").length;
+                const professionalCount = reports.filter(r => r.typeFormation === "professional").length;
+                
+                document.getElementById('onlineReports').textContent = onlineCount;
+                document.getElementById('professionalReports').textContent = professionalCount;
+                
+                document.getElementById('departmentsCount').textContent = departments.size;
+                
+                let totalPresences = 0;
+                reports.forEach(report => {
+                    if (report.presences) {
+                        totalPresences += Object.keys(report.presences).length;
+                    }
+                });
+                document.getElementById('totalPresences').textContent = totalPresences;
+            }
+            
+            function displayReports() {
+                const reportsList = document.getElementById('reportsList');
+                const emptyState = document.getElementById('emptyState');
+                const searchInput = document.getElementById('searchInput');
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                reportsList.innerHTML = '';
+                
+                let filteredReports = [...reports];
+                
+                if (currentFilter === "online") {
+                    filteredReports = filteredReports.filter(r => r.typeFormation === "online");
+                } else if (currentFilter === "professional") {
+                    filteredReports = filteredReports.filter(r => r.typeFormation === "professional");
+                } else if (currentFilter === "recent") {
+                    const sevenDaysAgo = new Date();
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                    
+                    filteredReports = filteredReports.filter(r => {
+                        const reportDate = new Date(r.date);
+                        return reportDate >= sevenDaysAgo;
+                    });
+                }
+                
+                if (searchTerm) {
+                    filteredReports = filteredReports.filter(r => 
+                        (r.formationTitre && r.formationTitre.toLowerCase().includes(searchTerm)) ||
+                        (r.professeur && r.professeur.toLowerCase().includes(searchTerm)) ||
+                        (r.departement && r.departement.toLowerCase().includes(searchTerm)) ||
+                        (r.contenu && r.contenu.toLowerCase().includes(searchTerm))
+                    );
+                }
+                
+                if (currentSort === "recent") {
+                    filteredReports.sort((a, b) => new Date(b.date) - new Date(a.date));
+                } else if (currentSort === "oldest") {
+                    filteredReports.sort((a, b) => new Date(a.date) - new Date(b.date));
+                } else if (currentSort === "prof") {
+                    filteredReports.sort((a, b) => a.professeur.localeCompare(b.professeur));
+                } else if (currentSort === "department") {
+                    filteredReports.sort((a, b) => a.departement.localeCompare(b.departement));
+                }
+                
+                if (filteredReports.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                
+                emptyState.classList.add('hidden');
+                
+                filteredReports.forEach(report => {
+                    const isOnline = report.typeFormation === 'online';
+                    const presenceCount = report.presences ? Object.keys(report.presences).length : 0;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'report-card bg-white border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:border-primary';
+                    card.dataset.id = report.id;
+                    
+                    card.innerHTML = `
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-semibold text-gray-800">${report.formationTitre || 'Titre non spécifié'}</h3>
+                                <div class="flex items-center">
+                                    <span class="type-badge ${isOnline ? 'badge-online' : 'badge-professional'} mr-2">
+                                        ${isOnline ? 'En ligne' : 'Professionnelle'}
+                                    </span>
+                                    <span class="department-tag">${report.departement || 'Non spécifié'}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="ri-user-line mr-2"></i>
+                                    ${report.professeur || 'Professeur non spécifié'}
+                                </div>
+                                
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="ri-calendar-line mr-2"></i>
+                                    ${formatDate(report.date)}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-600 line-clamp-2">${report.contenu || 'Aucun contenu disponible'}</p>
+                            </div>
+                            
+                            <div class="mt-4 flex items-center justify-between">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="ri-user-check-line mr-2 text-green-600"></i>
+                                    ${presenceCount} élève(s) présent(s)
+                                </div>
+                                <button class="px-4 py-2 bg-primary/10 text-primary font-medium rounded-button hover:bg-primary/20 transition-colors">
+                                    <i class="ri-eye-line mr-2"></i> Voir le rapport
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    reportsList.appendChild(card);
+                    
+                    card.querySelector('button').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        showReportDetails(report);
+                    });
+                    
+                    card.addEventListener('click', function() {
+                        showReportDetails(report);
+                    });
+                });
+            }
+            
+            function showReportDetails(report) {
+                selectedReport = report;
+                
+                document.getElementById('modalFormationTitle').textContent = report.formationTitre || 'Titre non spécifié';
+                document.getElementById('modalProfessor').textContent = report.professeur || 'Professeur non spécifié';
+                document.getElementById('modalEmail').textContent = report.email || 'Email non spécifié';
+                document.getElementById('modalReportDate').textContent = formatDate(report.date);
+                document.getElementById('modalDepartment').textContent = report.departement || 'Non spécifié';
+                
+                const typeBadge = document.getElementById('modalFormationTypeBadge');
+                if (report.typeFormation === "online") {
+                    typeBadge.className = 'type-badge badge-online';
+                    typeBadge.textContent = 'Formation en ligne';
+                    document.getElementById('presenceTitle').innerHTML = '<i class="ri-user-line mr-2"></i> Participants à la formation (en cours seulement)';
+                } else {
+                    typeBadge.className = 'type-badge badge-professional';
+                    typeBadge.textContent = 'Formation professionnelle';
+                    document.getElementById('presenceTitle').innerHTML = '<i class="ri-user-check-line mr-2"></i> Liste des présences';
+                }
+                
+                document.getElementById('modalReportContent').textContent = report.contenu || 'Aucun contenu disponible';
+                
+                const presenceList = document.getElementById('presenceList');
+                const presenceCount = document.getElementById('presenceCount');
+                
+                presenceList.innerHTML = '';
+                
+                if (report.presences && Object.keys(report.presences).length > 0) {
+                    // Filtrer pour n'afficher que les participants en cours (non terminés)
+                    let activeParticipants = {};
+                    let activeCount = 0;
+                    
+                    for (const studentId in report.presences) {
+                        const student = report.presences[studentId];
+                        
+                        if (typeof student === 'object') {
+                            // Nouveau format avec statut
+                            if (!student.finished) {
+                                activeParticipants[studentId] = student;
+                                activeCount++;
+                            }
+                        } else {
+                            // Ancien format (string) - on suppose qu'ils sont en cours
+                            activeParticipants[studentId] = student;
+                            activeCount++;
+                        }
+                    }
+                    
+                    presenceCount.textContent = activeCount + ' élèves participants (en cours)';
+                    
+                    for (const studentId in activeParticipants) {
+                        const student = activeParticipants[studentId];
+                        let studentName = '';
+                        let studentStatus = '';
+                        
+                        if (typeof student === 'string') {
+                            // Ancien format (string)
+                            studentName = student;
+                        } else if (student && typeof student === 'object') {
+                            // Nouveau format (objet)
+                            studentName = student.nom || 'Nom inconnu';
+                            
+                            // Ajout du statut pour les formations en ligne
+                            if (report.typeFormation === "online") {
+                                studentStatus = student.finished 
+                                    ? '<span class="student-status finished">Terminé</span>' 
+                                    : '<span class="student-status in-progress">En cours</span>';
+                            }
+                        } else {
+                            studentName = 'Nom inconnu';
+                        }
+                        
+                        const presenceItem = document.createElement('div');
+                        presenceItem.className = 'presence-item';
+                        presenceItem.innerHTML = `
+                            <div class="flex justify-between w-full items-center">
+                                <div class="student-details">
+                                    <span class="font-medium">${studentName}</span>
+                                    <div class="text-xs text-gray-500">${student.telephone || 'Téléphone non renseigné'}</div>
+                                </div>
+                                ${studentStatus || ''}
+                            </div>
+                        `;
+                        
+                        presenceList.appendChild(presenceItem);
+                    }
+                } else {
+                    presenceCount.textContent = '0 élèves participants';
+                    presenceList.innerHTML = '<p class="text-gray-500 text-center py-4">Aucun participant enregistré</p>';
+                }
+                
+                document.getElementById('reportModal').style.display = 'flex';
+            }
+            
+            document.getElementById('closeModal').addEventListener('click', function() {
+                document.getElementById('reportModal').style.display = 'none';
+                selectedReport = null;
+            });
+            
+            document.getElementById('deleteReport').addEventListener('click', function() {
+                if (!selectedReport) return;
+                
+                if (confirm("Êtes-vous sûr de vouloir supprimer ce rapport ? Cette action est irréversible.")) {
+                    const reportRef = database.ref('rapports/' + selectedReport.id);
+                    reportRef.remove()
+                        .then(() => {
+                            reports = reports.filter(r => r.id !== selectedReport.id);
+                            updateStatistics();
+                            displayReports();
+                            
+                            document.getElementById('reportModal').style.display = 'none';
+                            selectedReport = null;
+                            
+                            showNotification('Rapport supprimé avec succès', 'success');
+                        })
+                        .catch(error => {
+                            console.error('Erreur lors de la suppression du rapport:', error);
+                            showNotification('Erreur lors de la suppression du rapport: ' + error.message, 'error');
+                        });
+                }
+            });
+            
+            document.getElementById('downloadReport').addEventListener('click', function() {
+                if (!selectedReport) return;
+                
+                let content = `
+Rapport de Formation - ${selectedReport.formationTitre || 'Titre non spécifié'}
+
+Département: ${selectedReport.departement || 'Non spécifié'}
+Professeur: ${selectedReport.professeur || 'Professeur non spécifié'}
+Email: ${selectedReport.email || 'Email non spécifié'}
+Date du rapport: ${formatDate(selectedReport.date)}
+Type de formation: ${selectedReport.typeFormation === 'online' ? 'Formation en ligne' : 'Formation professionnelle'}
+
+Contenu du rapport:
+${selectedReport.contenu || 'Aucun contenu disponible'}
+                `;
+                
+                if (selectedReport.presences && Object.keys(selectedReport.presences).length > 0) {
+                    content += `\n\nÉlèves participants (en cours seulement):\n`;
+                    
+                    // Filtrer pour n'inclure que les participants en cours
+                    for (const studentId in selectedReport.presences) {
+                        const student = selectedReport.presences[studentId];
+                        let studentName = '';
+                        let status = '';
+                        
+                        if (typeof student === 'string') {
+                            studentName = student;
+                        } else if (student && typeof student === 'object') {
+                            studentName = student.nom || 'Nom inconnu';
+                            if (selectedReport.typeFormation === "online") {
+                                if (student.finished) continue; // Sauter les terminés
+                                status = student.finished ? ' (Terminé)' : ' (En cours)';
+                            }
+                        }
+                        
+                        content += `- ${studentName}${status}\n`;
+                    }
+                    content += `\nTotal: ${Object.keys(selectedReport.presences).length} élèves`;
+                } else {
+                    content += `\n\nÉlèves participants: Aucun`;
+                }
+                
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `rapport-${selectedReport.formationTitre || 'formation'}-${new Date().toISOString().slice(0, 10)}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+            
+            const filterButtons = document.querySelectorAll('[data-filter]');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    displayReports();
+                });
+            });
+            
+            document.getElementById('sortSelect').addEventListener('change', function() {
+                currentSort = this.value;
+                displayReports();
+            });
+            
+            document.getElementById('searchInput').addEventListener('input', function() {
+                displayReports();
+            });
+            
+            loadReports();
+        });
+    </script>
+</body>
+</html>

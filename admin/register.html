@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Formulaire d'inscription</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#8B5CF6'
+                    },
+                    borderRadius: {
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        .hidden-field {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .visible-field {
+            max-height: 500px;
+            opacity: 1;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-gradient {
+            background: linear-gradient(90deg, #4ade80, #facc15);
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease forwards;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .phone-input-container {
+            display: flex;
+            align-items: center;
+        }
+        .phone-prefix {
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            padding: 0 12px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #374151;
+        }
+        .phone-input {
+            border-radius: 0 8px 8px 0;
+            flex: 1;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <nav class="navbar-gradient text-white p-4 fixed w-full top-0 z-10 grid grid-cols-3 items-center">
+        <div class="flex items-center">
+            <span class="font-['Pacifico'] text-xl">Orjeun</span>
+        </div>
+        <h1 class="text-lg font-medium text-center px-4 sm:text-base">Inscription</h1>
+        <div class="flex items-center justify-end">
+            <i class="ri-user-line ri-lg"></i>
+        </div>
+    </nav>
+
+    <main class="px-4 pt-24 pb-20 md:px-6">
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6 md:w-2/3 lg:w-1/2 mx-auto">
+            <p class="text-gray-600 mb-6">Veuillez remplir ce formulaire pour créer votre compte.</p>
+            <form id="inscriptionForm">
+                <div class="form-group mb-4">
+                    <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                    <input type="text" id="nom" name="nom" required 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+
+                <div class="form-group mb-4">
+                    <label for="prenom" class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                    <input type="text" id="prenom" name="prenom" required 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+
+                <div class="form-group mb-4">
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="email" name="email" required 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+
+                <!-- Champ téléphone modifié avec préfixe +509 -->
+                <div class="form-group mb-4 slide-in">
+                    <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">Numéro de téléphone</label>
+                    <div class="phone-input-container">
+                        <span class="phone-prefix">+509</span>
+                        <input type="tel" id="telephone" name="telephone" required 
+                            class="phone-input w-full h-10 pl-3 pr-10 border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="ex: 44358909"
+                            pattern="[0-9]{8}" 
+                            title="Entrez les 8 chiffres de votre numéro de téléphone"
+                            maxlength="8">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Entrez les 8 chiffres sans le préfixe +509</p>                 
+                </div>
+
+                <div class="form-group mb-4">
+                    <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Rôle</label>
+                    <div class="relative">
+                        <select id="role" name="role" required 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
+                            <option value="" disabled selected>Sélectionnez un rôle</option>
+                            <option value="vendeur">Vendeur</option>
+                            <option value="professeur">Professeur</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <i class="ri-arrow-down-s-line ri-lg text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="vendeurFields" class="hidden-field">
+                    <div class="form-group mb-4">
+                        <label for="departement" class="block text-sm font-medium text-gray-700 mb-1">Département</label>
+                        <div class="relative">
+                            <select id="departement" name="departement" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
+                                <option value="" disabled selected>Chargement...</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                <i class="ri-arrow-down-s-line ri-lg text-gray-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="commune" class="block text-sm font-medium text-gray-700 mb-1">Commune</label>
+                        <div class="relative">
+                            <select id="commune" name="commune" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
+                                <option value="" disabled selected>Sélectionnez d'abord un département</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                <i class="ri-arrow-down-s-line ri-lg text-gray-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="nouvelleCommuneField" class="hidden-field">
+                        <div class="form-group mb-4">
+                            <label for="nouvelleCommune" class="block text-sm font-medium text-gray-700 mb-1">Nom de votre commune</label>
+                            <input type="text" id="nouvelleCommune" name="nouvelleCommune" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                pattern="[A-Za-zÀ-ÿ\s\-']{2,}" 
+                                title="Le nom de la commune doit contenir au moins 2 caractères">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="professeurFields" class="hidden-field">
+                    <div class="form-group mb-4">
+                        <label for="departementProfesseur" class="block text-sm font-medium text-gray-700 mb-1">Département</label>
+                        <div class="relative">
+                            <select id="departementProfesseur" name="departementProfesseur" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
+                                <option value="" disabled selected>Chargement...</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                <i class="ri-arrow-down-s-line ri-lg text-gray-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10"
+                            minlength="6">
+                        <div class="absolute inset-y-0 right-0 flex items-center px-3 cursor-pointer" id="togglePassword">
+                            <i class="ri-eye-line ri-lg text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-6">
+                    <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirmation du mot de passe</label>
+                    <div class="relative">
+                        <input type="password" id="confirmPassword" name="confirmPassword" required 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10"
+                            minlength="6">
+                        <div class="absolute inset-y-0 right-0 flex items-center px-3 cursor-pointer" id="toggleConfirmPassword">
+                            <i class="ri-eye-line ri-lg text-gray-500"></i>
+                        </div>
+                    </div>
+                    <p id="passwordError" class="text-red-500 text-sm mt-1 hidden">Les mots de passe ne correspondent pas.</p>
+                </div>
+
+                <button type="button" id="submitBtn" class="w-full bg-primary text-white py-3 px-4 rounded-button hover:bg-primary/90 transition-colors duration-300 flex items-center justify-center cursor-pointer">
+                    <span>S'inscrire</span>
+                    <i class="ri-arrow-right-line ri-lg ml-2"></i>
+                </button>
+            </form>
+        </div>
+        <p class="text-center text-sm text-gray-600 mb-6">
+            Vous avez déjà un compte ?
+            <a href="connexion" class="text-primary font-medium">Connectez-vous</a>
+        </p>
+    </main>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-5 rounded-lg flex flex-col items-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+            <p class="mt-3 text-gray-700">Enregistrement en cours...</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+                authDomain: "orjeun-9dec4.firebaseapp.com",
+                databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+                projectId: "orjeun-9dec4",
+                storageBucket: "orjeun-9dec4.appspot.com",
+                messagingSenderId: "979782321937",
+                appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+                measurementId: "G-G316HCYF9E"
+            };
+            
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            const database = firebase.database();
+
+            const roleSelect = document.getElementById('role');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const departementSelect = document.getElementById('departement');
+            const communeSelect = document.getElementById('commune');
+            const nouvelleCommuneField = document.getElementById('nouvelleCommuneField');
+            const nouvelleCommuneInput = document.getElementById('nouvelleCommune');
+            const departementProfesseurSelect = document.getElementById('departementProfesseur');
+            const passwordError = document.getElementById('passwordError');
+            const telephoneInput = document.getElementById('telephone');
+
+            async function chargerDepartements(selectElement) {
+                const snapshot = await database.ref('region_nationale').once('value');
+                selectElement.innerHTML = '<option value="" disabled selected>Sélectionnez un département</option>';
+                
+                snapshot.forEach(departmentSnapshot => {
+                    const option = document.createElement('option');
+                    option.value = departmentSnapshot.key;
+                    option.textContent = departmentSnapshot.key;
+                    selectElement.appendChild(option);
+                });
+            }
+
+            chargerDepartements(departementSelect);
+            chargerDepartements(departementProfesseurSelect);
+
+            async function chargerCommunes(departement, communeSelectElement) {
+                const snapshot = await database.ref(`region_nationale/${departement}`).once('value');
+                communeSelectElement.innerHTML = '<option value="" disabled selected>Sélectionnez une commune</option>';
+                
+                snapshot.forEach(communeSnapshot => {
+                    if(communeSnapshot.key && communeSnapshot.key.trim() !== '') {
+                        const option = document.createElement('option');
+                        option.value = communeSnapshot.key;
+                        option.textContent = communeSnapshot.key;
+                        communeSelectElement.appendChild(option);
+                    }
+                });
+                
+                const autreOption = document.createElement('option');
+                autreOption.value = 'autre';
+                autreOption.textContent = 'Ma commune n\'est pas dans la liste';
+                communeSelectElement.appendChild(autreOption);
+            }
+
+            departementSelect.addEventListener('change', async function() {
+                if(this.value) await chargerCommunes(this.value, communeSelect);
+            });
+
+            communeSelect.addEventListener('change', function() {
+                const showCommuneField = this.value === 'autre';
+                nouvelleCommuneField.classList.toggle('visible-field', showCommuneField);
+                nouvelleCommuneInput.toggleAttribute('required', showCommuneField);
+                if(showCommuneField) nouvelleCommuneInput.focus();
+            });
+
+            function updateFields() {
+                document.querySelectorAll('.hidden-field').forEach(field => {
+                    field.classList.remove('visible-field');
+                    field.querySelector('input')?.removeAttribute('required');
+                    field.querySelector('select')?.removeAttribute('required');
+                });
+
+                if(roleSelect.value === 'vendeur') {
+                    document.getElementById('vendeurFields').classList.add('visible-field');
+                    departementSelect.required = true;
+                    communeSelect.required = true;
+                }
+                else if(roleSelect.value === 'professeur') {
+                    document.getElementById('professeurFields').classList.add('visible-field');
+                    departementProfesseurSelect.required = true;
+                }
+            }
+
+            roleSelect.addEventListener('change', updateFields);
+
+            document.querySelectorAll('[id^="toggle"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const input = this.parentElement.querySelector('input');
+                    const icon = this.querySelector('i');
+                    
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                    icon.classList.toggle('ri-eye-line');
+                    icon.classList.toggle('ri-eye-off-line');
+                });
+            });
+
+            function checkPasswords() {
+                const password = document.getElementById('password');
+                const confirm = document.getElementById('confirmPassword');
+                const submitBtn = document.getElementById('submitBtn');
+                
+                if(password.value && confirm.value && password.value !== confirm.value) {
+                    confirm.setCustomValidity('Les mots de passe ne correspondent pas');
+                    passwordError.classList.remove('hidden');
+                    confirm.classList.add('border-red-500');
+                    confirm.classList.remove('border-gray-300');
+                    submitBtn.disabled = true;
+                } else {
+                    confirm.setCustomValidity('');
+                    passwordError.classList.add('hidden');
+                    confirm.classList.remove('border-red-500');
+                    confirm.classList.add('border-gray-300');
+                    submitBtn.disabled = false;
+                }
+            }
+
+            document.getElementById('password').addEventListener('input', checkPasswords);
+            document.getElementById('confirmPassword').addEventListener('input', checkPasswords);
+
+            // Validation du numéro de téléphone (8 chiffres seulement)
+            telephoneInput.addEventListener('input', function() {
+                // N'autoriser que les chiffres
+                this.value = this.value.replace(/\D/g, '');
+                
+                // Limiter à 8 chiffres
+                if (this.value.length > 8) {
+                    this.value = this.value.slice(0, 8);
+                }
+                
+                // Validation visuelle
+                if(this.value.length === 8) {
+                    this.classList.remove('border-red-500');
+                    this.classList.add('border-green-500');
+                    setTimeout(() => {
+                        this.classList.remove('border-green-500');
+                        this.classList.add('border-gray-300');
+                    }, 1000);
+                } else if(this.value.length > 0) {
+                    this.classList.remove('border-gray-300');
+                    this.classList.add('border-red-500');
+                } else {
+                    this.classList.remove('border-red-500', 'border-green-500');
+                    this.classList.add('border-gray-300');
+                }
+            });
+
+            document.getElementById('submitBtn').addEventListener('click', async () => {
+                const form = document.getElementById('inscriptionForm');
+                
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                if(password !== confirmPassword) {
+                    passwordError.classList.remove('hidden');
+                    document.getElementById('confirmPassword').classList.add('border-red-500');
+                    return;
+                }
+                
+                const telephone = telephoneInput.value;
+                if(telephone.length !== 8) {
+                    showNotification('Veuillez entrer un numéro de téléphone valide (8 chiffres)', 'red');
+                    telephoneInput.classList.add('border-red-500');
+                    telephoneInput.focus();
+                    return;
+                }
+                
+                try {
+                    loadingOverlay.classList.remove('hidden');
+                    
+                    // Ajouter le préfixe +509 pour le stockage
+                    const telephoneComplet = '+509' + telephone;
+                    
+                    const email = document.getElementById('email').value;
+                    const emailCheck = await database.ref('unconfirmed_admin_member')
+                        .orderByChild('email')
+                        .equalTo(email)
+                        .once('value');
+
+                    if(emailCheck.exists()) {
+                        throw new Error('Cet email est déjà enregistré');
+                    }
+                    
+                    const telCheck = await database.ref('unconfirmed_admin_member')
+                        .orderByChild('num')
+                        .equalTo(telephoneComplet)
+                        .once('value');
+
+                    if(telCheck.exists()) {
+                        throw new Error('Ce numéro de téléphone est déjà enregistré');
+                    }
+
+                    const formData = {
+                        nom: document.getElementById('nom').value,
+                        prenom: document.getElementById('prenom').value,
+                        email: email,
+                        num: telephoneComplet,
+                        role: roleSelect.value,
+                        password: password,
+                        timestamp: Date.now()
+                    };
+
+                    if(formData.role === 'vendeur') {
+                        formData.departement = departementSelect.value;
+                        
+                        if(communeSelect.value === 'autre') {
+                            const nouvelleCommune = nouvelleCommuneInput.value.trim();
+                            if(!nouvelleCommune) throw new Error('Veuillez entrer le nom de votre commune');
+                            
+                            await database.ref(`region_nationale/${formData.departement}`)
+                                .update({ [nouvelleCommune]: true });
+                            
+                            formData.commune = nouvelleCommune;
+                        } else {
+                            formData.commune = communeSelect.value;
+                        }
+                    }
+
+                    if(formData.role === 'professeur') {
+                        formData.departement = departementProfesseurSelect.value;
+                    }
+
+                    await database.ref('unconfirmed_admin_member').push(formData);
+                    
+                    showNotification('Inscription réussie ! Redirection...', 'green');
+                    setTimeout(() => {
+                        window.location.href = 'login';
+                    }, 2000);
+                }
+                catch(error) {
+                    showNotification(error.message, 'red');
+                    console.error(error);
+                }
+                finally {
+                    loadingOverlay.classList.add('hidden');
+                }
+            });
+
+            function showNotification(message, color) {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-md shadow-lg text-white ${
+                    color === 'green' ? 'bg-green-500' : 'bg-red-500'
+                }`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 5000);
+            }
+
+            function handleResponsive() {
+                const navTitle = document.querySelector('nav h1');
+                navTitle.classList.toggle('text-sm', window.innerWidth < 640);
+            }
+
+            window.addEventListener('resize', handleResponsive);
+            handleResponsive();
+        });
+    </script>
+</body>
+</html>

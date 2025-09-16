@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau de Bord - Chef d'Entreprise Orjeun</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f9fafb;
+  background-image: radial-gradient(#e5f5ea 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.nav-item.active {
+  color: #16a34a;
+  border-bottom: 2px solid #fbbf24;
+}
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #22c55e;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.vendor-card {
+  transition: all 0.3s ease;
+  border-left: 4px solid #fbbf24;
+}
+.vendor-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+.stat-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #fffbeb 100%);
+  border: 1px solid #dcfce7;
+}
+.header-gradient {
+  background: linear-gradient(135deg, #3bb54a 0%, #fbbf24 100%);
+}
+.chart-container {
+  min-height: 300px;
+}
+.ceo-header {
+  background: linear-gradient(135deg, #3bb54a 0%, #fbbf24 100%);
+}
+.ceo-title {
+  font-family: 'Pacifico', cursive;
+}
+.promotion-card {
+  transition: all 0.3s ease;
+  border-top: 4px solid #3b82f6;
+}
+.promotion-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+.gradient-text {
+  background: linear-gradient(135deg, #3bb54a 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.role-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+}
+.role-vendeur {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+.role-professeur {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+.role-communal {
+  background-color: #dcfce7;
+  color: #166534;
+}
+.role-departemental {
+  background-color: #ede9fe;
+  color: #5b21b6;
+}
+.role-national {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+.news-card {
+  border-left: 4px solid #3b82f6;
+}
+.news-card-header {
+  background-color: #f0fdf4;
+}
+.admin-name-display {
+  background: #f0fdf4;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+}
+.admin-name-display i {
+  margin-right: 6px;
+  color: #22c55e;
+}
+.hierarchy-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: #f9fafb;
+}
+.hierarchy-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+.hierarchy-title {
+  font-weight: 600;
+  color: #1f2937;
+  margin-right: 1rem;
+}
+.role-tag {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.role-tag-departmental {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+.role-tag-communal {
+  background-color: #dcfce7;
+  color: #166534;
+}
+.role-tag-vendor {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+.user-card:hover {
+  transform: translateY(-2px);
+}
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+.user-info {
+  flex-grow: 1;
+}
+.user-name {
+  font-weight: 500;
+  color: #1f2937;
+}
+.user-email {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+.promote-btn {
+  padding: 0.25rem 0.75rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.promote-btn:hover {
+  background-color: #2563eb;
+}
+.commune-section {
+  margin-left: 1.5rem;
+  padding-left: 1rem;
+  border-left: 2px dashed #d1d5db;
+}
+.vendor-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+</style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+<div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+  <div class="loader"></div>
+  <p class="ml-4 text-gray-700">Chargement des données...</p>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<nav class="fixed top-0 w-full ceo-header shadow-sm z-10">
+<div class="px-4 py-3 flex justify-between items-center">
+  <div class="flex items-center">
+    <span class="ceo-title text-xl text-white">Orjeun CEO</span>
+  </div>
+  <div class="flex items-center space-x-4">
+    <div id="admin-info" class="text-right">
+      <p class="text-sm font-medium text-white">Tableau de Bord</p>
+      <p class="text-xs text-white/80">Chef d'Entreprise</p>
+    </div>
+    <div class="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full">
+      <i class="ri-user-star-line ri-lg text-white"></i>
+    </div>
+    <div class="admin-name-display">
+      <i class="ri-user-line"></i>
+      <span id="adminDisplayName">Administrateur</span>
+    </div>
+    <button id="logoutButton" class="flex items-center text-sm font-medium text-white hover:text-gray-200">
+      <i class="ri-logout-circle-r-line mr-1"></i> Déconnexion
+    </button>
+  </div>
+</div>
+</nav>
+
+<main class="pt-20 pb-16 px-4">
+<section class="mt-6 mb-8">
+<h2 class="text-lg font-semibold mb-4 text-gray-700">Aperçu Général</h2>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-royal-100 rounded-full mb-2">
+      <i class="ri-team-line ri-lg text-royal-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Utilisateurs Totaux</p>
+    <p id="total-users" class="text-xl font-semibold">0</p>
+  </div>
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-green-100 rounded-full mb-2">
+      <i class="ri-user-line ri-lg text-green-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Vendeurs Actifs</p>
+    <p id="total-vendors" class="text-xl font-semibold">0</p>
+  </div>
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-orange-100 rounded-full mb-2">
+      <i class="ri-user-settings-line ri-lg text-orange-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Responsables</p>
+    <p id="total-managers" class="text-xl font-semibold">0</p>
+  </div>
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-purple-100 rounded-full mb-2">
+      <i class="ri-money-dollar-circle-line ri-lg text-purple-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Ventes Totales</p>
+    <p id="total-sales" class="text-xl font-semibold">0 HTG</p>
+  </div>
+</div>
+</section>
+
+<div class="bg-white rounded-t shadow-sm mb-4">
+<div class="flex border-b overflow-x-auto">
+  <button class="nav-item active flex-none px-4 py-3 text-center text-sm font-medium" data-tab="dashboard">
+    <i class="ri-dashboard-line ri-sm mr-1"></i> Tableau de bord
+  </button>
+  <button class="nav-item flex-none px-4 py-3 text-center text-sm font-medium" data-tab="profits">
+    <i class="ri-money-dollar-circle-line ri-sm mr-1"></i> Répartition Profits
+  </button>
+  <button class="nav-item flex-none px-4 py-3 text-center text-sm font-medium" data-tab="suggestions">
+    <i class="ri-lightbulb-flash-line ri-sm mr-1"></i> Suggestions
+  </button>
+  <button class="nav-item flex-none px-4 py-3 text-center text-sm font-medium" data-tab="promotions">
+    <i class="ri-user-star-line ri-sm mr-1"></i> Promotions
+  </button>
+  <button class="nav-item flex-none px-4 py-3 text-center text-sm font-medium" data-tab="administration">
+    <i class="ri-admin-line ri-sm mr-1"></i> Administration
+  </button>
+  <button class="nav-item flex-none px-4 py-3 text-center text-sm font-medium" data-tab="news">
+    <i class="ri-newspaper-line ri-sm mr-1"></i> Journal
+  </button>
+</div>
+</div>
+
+<div id="dashboard" class="tab-content active">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-full mb-2">
+      <i class="ri-map-pin-user-line ri-lg text-blue-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Resp. Communaux</p>
+    <p id="communal-managers" class="text-xl font-semibold">0</p>
+  </div>
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-indigo-100 rounded-full mb-2">
+      <i class="ri-map-pin-line ri-lg text-indigo-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Resp. Départementaux</p>
+    <p id="departmental-managers" class="text-xl font-semibold">0</p>
+  </div>
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-red-100 rounded-full mb-2">
+      <i class="ri-globe-line ri-lg text-red-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Resp. Nationaux</p>
+    <p id="national-managers" class="text-xl font-semibold">0</p>
+  </div>
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-pink-100 rounded-full mb-2">
+      <i class="ri-shopping-bag-line ri-lg text-pink-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Produits Vendus</p>
+    <p id="total-products" class="text-xl font-semibold">0</p>
+  </div>
+</div>
+
+<div class="bg-white p-4 rounded shadow-sm mb-6">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="font-medium text-gray-700">Répartition des Profits</h3>
+    <div id="profit-total" class="text-xs text-gray-500">Total: 0 HTG</div>
+  </div>
+  <div id="profit-chart" class="w-full h-64 chart-container">
+    <canvas id="revenueChart"></canvas>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-6 mb-6">
+  <div class="bg-white p-4 rounded shadow-sm">
+    <h3 class="font-medium mb-4 text-gray-700">Répartition des Utilisateurs</h3>
+    <div id="users-distribution-chart" class="w-full h-64 chart-container">
+      <canvas id="distributionChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white p-4 rounded shadow-sm mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-medium text-gray-700">Professeurs Actifs</h3>
+    <div class="flex items-center bg-indigo-100 px-3 py-1 rounded-full">
+      <i class="ri-graduation-cap-line text-indigo-600"></i>
+      <span id="total-professors" class="ml-2 font-medium">0</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+      <div class="flex items-center">
+        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+          <i class="ri-graduation-cap-line ri-xl text-indigo-600"></i>
+        </div>
+        <div>
+          <h4 class="font-medium text-indigo-800">Professeurs</h4>
+          <p class="text-sm text-gray-600">Nombre de professeurs connectés</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="profits" class="tab-content">
+<div class="bg-white p-4 rounded shadow-sm mb-6">
+  <h3 class="font-medium mb-4 text-gray-700">Configuration des Pourcentages</h3>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Pourcentage Vendeurs</label>
+      <div class="flex items-center">
+        <input type="range" min="0" max="100" value="70" class="w-full" id="vendor-percent">
+        <span class="ml-2 w-12 text-center font-medium" id="vendor-percent-value">70%</span>
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Pourcentage Communal</label>
+      <div class="flex items-center">
+        <input type="range" min="0" max="100" value="5" class="w-full" id="communal-percent">
+        <span class="ml-2 w-12 text-center font-medium" id="communal-percent-value">5%</span>
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Pourcentage Départemental</label>
+      <div class="flex items-center">
+        <input type="range" min="0" max="100" value="2" class="w-full" id="departmental-percent">
+        <span class="ml-2 w-12 text-center font-medium" id="departmental-percent-value">2%</span>
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Pourcentage National</label>
+      <div class="flex items-center">
+        <input type="range" min="0" max="100" value="1" class="w-full" id="national-percent">
+        <span class="ml-2 w-12 text-center font-medium" id="national-percent-value">1%</span>
+      </div>
+    </div>
+    <div class="md:col-span-2">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Pourcentage Orjeun</label>
+      <div class="flex items-center">
+        <input type="range" min="0" max="100" value="22" class="w-full" id="orjeun-percent" disabled>
+        <span class="ml-2 w-12 text-center font-medium" id="orjeun-percent-value">22%</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+    <h4 class="font-medium text-blue-800 mb-2">Répartition Réelle</h4>
+    <p class="text-sm text-blue-700">Montant total des ventes: <span id="current-total-sales" class="font-bold">0 HTG</span></p>
+    <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
+      <div class="flex justify-between">
+        <span>Vendeurs:</span>
+        <span class="font-medium" id="vendor-actual">0 HTG</span>
+      </div>
+      <div class="flex justify-between">
+        <span>Communal:</span>
+        <span class="font-medium" id="communal-actual">0 HTG</span>
+      </div>
+      <div class="flex justify-between">
+        <span>Départemental:</span>
+        <span class="font-medium" id="departmental-actual">0 HTG</span>
+      </div>
+      <div class="flex justify-between">
+        <span>National:</span>
+        <span class="font-medium" id="national-actual">0 HTG</span>
+      </div>
+      <div class="flex justify-between col-span-2 pt-2 border-t">
+        <span>Orjeun:</span>
+        <span class="font-bold" id="orjeun-actual">0 HTG</span>
+      </div>
+    </div>
+  </div>
+  
+  <button id="save-percentages" class="mt-6 w-full py-3 bg-gradient-to-r from-green-500 to-yellow-400 text-white rounded-lg font-medium hover:from-green-600 hover:to-yellow-500 transition">
+    <i class="ri-save-line ri-lg mr-2"></i> Enregistrer les Pourcentages
+  </button>
+</div>
+</div>
+
+<div id="suggestions" class="tab-content">
+<div class="bg-white p-4 rounded shadow-sm mb-4">
+  <h3 class="font-medium mb-4 text-gray-700">Créer une Nouvelle Suggestion</h3>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Type de Suggestion</label>
+      <select id="suggestion-type" class="w-full p-2 border rounded-lg">
+        <option value="produit">Produit</option>
+        <option value="formation">Formation</option>
+        <option value="emission">Émission</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+      <input type="text" id="suggestion-title" placeholder="Titre de la suggestion" class="w-full p-2 border rounded-lg">
+    </div>
+  </div>
+  
+  <div class="mb-4">
+    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+    <textarea id="suggestion-description" rows="3" placeholder="Description détaillée..." class="w-full p-2 border rounded-lg"></textarea>
+  </div>
+  
+  <button id="create-suggestion" class="w-full py-3 bg-gradient-to-r from-green-500 to-yellow-400 text-white rounded-lg font-medium hover:from-green-600 hover:to-yellow-500 transition">
+    <i class="ri-add-circle-line ri-lg mr-2"></i> Créer la Suggestion
+  </button>
+</div>
+
+<div class="bg-white p-4 rounded shadow-sm">
+  <h3 class="font-medium mb-4 text-gray-700">Suggestions Actives</h3>
+  
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm text-left">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2">Type</th>
+          <th class="px-4 py-2">Titre</th>
+          <th class="px-4 py-2">Description</th>
+          <th class="px-4 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="suggestions-list">
+        <tr>
+          <td colspan="4" class="text-center py-8 text-gray-500">
+            <i class="ri-loader-4-line ri-xl animate-spin"></i>
+            <p>Chargement des suggestions...</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<div id="promotions" class="tab-content">
+<div class="bg-white p-4 rounded shadow-sm">
+  <h3 class="font-medium mb-4 text-gray-700">Système de Promotion</h3>
+  
+  <div class="mb-6">
+    <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionnez un département</label>
+    <select id="department-select" class="w-full p-2 border rounded-lg">
+      <option value="">Choisir un département...</option>
+    </select>
+  </div>
+  
+  <div id="department-hierarchy" class="space-y-6">
+    <div class="text-center py-12 text-gray-500">
+      <i class="ri-map-pin-line ri-xl"></i>
+      <p>Sélectionnez un département pour voir la hiérarchie</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="administration" class="tab-content">
+<div class="bg-white p-4 rounded shadow-sm">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="font-medium text-gray-700">Gestion des Membres</h3>
+    <div class="flex items-center bg-royal-100 px-3 py-1 rounded-full">
+      <i class="ri-team-line text-royal-600"></i>
+      <span id="total-members" class="ml-2 font-medium">0</span>
+    </div>
+  </div>
+  
+  <!-- Nouveaux filtres ajoutés -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Département</label>
+      <select id="department-filter" class="w-full p-2 border rounded-lg">
+        <option value="">Tous les départements</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Commune</label>
+      <select id="commune-filter" class="w-full p-2 border rounded-lg" disabled>
+        <option value="">Toutes les communes</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
+      <button id="reset-filters" class="w-full py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">
+        Réinitialiser
+      </button>
+    </div>
+  </div>
+  
+  <div class="mb-4">
+    <div class="relative">
+      <input type="text" id="admin-search" placeholder="Rechercher par nom, email ou téléphone..." class="w-full p-2 pl-10 border rounded-lg focus:ring-2 focus:ring-royal-500 focus:border-royal-500">
+      <i class="ri-search-line absolute left-3 top-3 text-gray-400"></i>
+    </div>
+  </div>
+  
+  <div class="flex justify-end mb-4">
+    <button id="confirm-payment" class="py-2 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+      <i class="ri-money-dollar-circle-line mr-2"></i> Confirmer paiement administration
+    </button>
+  </div>
+  
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm text-left">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2">Nom</th>
+          <th class="px-4 py-2">Email</th>
+          <th class="px-4 py-2">Téléphone</th>
+          <th class="px-4 py-2">Rôle</th>
+          <th class="px-4 py-2">Département</th>
+          <th class="px-4 py-2">Commune</th>
+          <th class="px-4 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="members-list">
+        <tr>
+          <td colspan="7" class="text-center py-8 text-gray-500">
+            <i class="ri-loader-4-line ri-xl animate-spin"></i>
+            <p>Chargement des membres...</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<div id="news" class="tab-content">
+<div class="bg-white p-4 rounded shadow-sm">
+  <h3 class="font-medium text-gray-700 mb-4">Journal des Activités</h3>
+  
+  <div class="grid grid-cols-1 gap-4" id="news-list">
+    <div class="text-center py-8 text-gray-500">
+      <i class="ri-loader-4-line ri-xl animate-spin"></i>
+      <p>Chargement du journal...</p>
+    </div>
+  </div>
+</div>
+</div>
+</main>
+
+<nav class="fixed bottom-0 w-full bg-white border-t shadow-sm">
+<div class="grid grid-cols-6 h-14">
+  <button class="flex flex-col items-center justify-center space-y-1 text-green-500">
+    <i class="ri-dashboard-line ri-lg"></i>
+    <span class="text-xs">Tableau</span>
+  </button>
+  <button class="flex flex-col items-center justify-center space-y-1 text-gray-500">
+    <i class="ri-money-dollar-circle-line ri-lg"></i>
+    <span class="text-xs">Profits</span>
+  </button>
+  <button class="flex flex-col items-center justify-center space-y-1 text-gray-500">
+    <i class="ri-lightbulb-flash-line ri-lg"></i>
+    <span class="text-xs">Suggestions</span>
+  </button>
+  <button class="flex flex-col items-center justify-center space-y-1 text-gray-500">
+    <i class="ri-user-star-line ri-lg"></i>
+    <span class="text-xs">Promotions</span>
+  </button>
+  <button class="flex flex-col items-center justify-center space-y-1 text-gray-500">
+    <i class="ri-admin-line ri-lg"></i>
+    <span class="text-xs">Admin</span>
+  </button>
+  <button class="flex flex-col items-center justify-center space-y-1 text-gray-500">
+    <i class="ri-newspaper-line ri-lg"></i>
+    <span class="text-xs">Journal</span>
+  </button>
+</div>
+</nav>
+
+<div id="region-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg p-6 w-11/12 max-w-md">
+    <h3 class="font-bold text-lg mb-4">Sélectionnez la région</h3>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Région</label>
+      <select id="region-select" class="w-full p-2 border rounded-lg">
+        <option value="Ouest">Ouest</option>
+        <option value="Nord">Nord</option>
+        <option value="Sud">Sud</option>
+        <option value="Nord-Est">Nord-Est</option>
+        <option value="Nord-Ouest">Nord-Ouest</option>
+        <option value="Sud-Est">Sud-Est</option>
+        <option value="Grand'Anse">Grand'Anse</option>
+        <option value="Nippes">Nippes</option>
+        <option value="Artibonite">Artibonite</option>
+        <option value="Centre">Centre</option>
+      </select>
+    </div>
+    <div class="flex justify-end space-x-3">
+      <button id="cancel-region" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Annuler</button>
+      <button id="confirm-region" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+  authDomain: "orjeun-9dec4.firebaseapp.com",
+  databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+  projectId: "orjeun-9dec4",
+  storageBucket: "orjeun-9dec4.appspot.com",
+  messagingSenderId: "979782321937",
+  appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+  measurementId: "G-G316HCYF9E"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+let users = [];
+let vendors = [];
+let managers = [];
+let communalManagers = [];
+let departmentalManagers = [];
+let nationalManagers = [];
+let products = [];
+let activeVendorProducts = [];
+let inactiveVendorProducts = [];
+let suggestions = [];
+let professors = [];
+let profitSettings = {
+  vendorPercent: 70,
+  communalPercent: 5,
+  departmentalPercent: 2,
+  nationalPercent: 1,
+  orjeunPercent: 22
+};
+let topVendors = [];
+let topCommunal = [];
+let topDepartmental = [];
+let totalSalesAmount = 0;
+let currentPromotion = { userId: null, type: null };
+let currentAdmin = null;
+let newsItems = [];
+let revenueChart = null;
+let distributionChart = null;
+let vendorSalesByEmail = {};
+let departments = [];
+let communesByDepartment = {};
+
+function showToast(message, duration = 3000) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+}
+
+async function initApp() {
+  const adminName = sessionStorage.getItem('adminName');
+  
+  if (!adminName) {
+    window.location.href = 'home';
+    return;
+  }
+  
+  try {
+    const adminsRef = database.ref('adm_principal');
+    const snapshot = await adminsRef.once('value');
+    const admins = snapshot.val();
+    
+    if (admins && admins[adminName]) {
+      currentAdmin = {
+        name: adminName,
+        email: admins[adminName].email || 'admin@orjeun.com'
+      };
+      
+      document.getElementById('adminDisplayName').textContent = adminName;
+      
+      await loadData();
+    } else {
+      alert('Administrateur non trouvé. Veuillez vous reconnecter.');
+      window.location.href = 'home';
+    }
+  } catch (error) {
+    console.error("Erreur de vérification admin:", error);
+    window.location.href = 'home';
+  }
+  
+  setupTabNavigation();
+  
+  setupPercentageSliders();
+  
+  document.getElementById('save-percentages').addEventListener('click', savePercentages);
+  document.getElementById('create-suggestion').addEventListener('click', createSuggestion);
+  document.getElementById('logoutButton').addEventListener('click', logout);
+  document.getElementById('confirm-payment').addEventListener('click', confirmPayment);
+  
+  document.getElementById('cancel-region').addEventListener('click', () => {
+    document.getElementById('region-modal').classList.add('hidden');
+  });
+  
+  document.getElementById('confirm-region').addEventListener('click', () => {
+    const region = document.getElementById('region-select').value;
+    promoteUser(currentPromotion.userId, currentPromotion.type, region);
+    document.getElementById('region-modal').classList.add('hidden');
+  });
+  
+  const adminSearch = document.getElementById('admin-search');
+  if (adminSearch) {
+    adminSearch.addEventListener('input', function() {
+      filterAdminMembers();
+    });
+  }
+
+  const departmentSelect = document.getElementById('department-select');
+  departmentSelect.addEventListener('change', function() {
+    displayDepartmentHierarchy(this.value);
+  });
+  
+  // Nouveaux écouteurs d'événements pour les filtres
+  document.getElementById('department-filter').addEventListener('change', function() {
+    updateCommuneFilter();
+    filterAdminMembers();
+  });
+  
+  document.getElementById('commune-filter').addEventListener('change', filterAdminMembers);
+  document.getElementById('reset-filters').addEventListener('click', resetFilters);
+}
+
+async function confirmPayment() {
+  if (!confirm("Êtes-vous sûr de vouloir confirmer le paiement de l'administration ? Cette action mettra à jour les quantités des produits.")) {
+    return;
+  }
+  
+  try {
+    const activeProductsRef = database.ref('produits_vendeurs');
+    const activeProductsSnapshot = await activeProductsRef.once('value');
+    const activeProducts = activeProductsSnapshot.val() || {};
+    
+    const activeUpdates = {};
+    for (const key in activeProducts) {
+      const product = activeProducts[key];
+      if (product.quantity_actual !== undefined) {
+        activeUpdates[`produits_vendeurs/${key}/quantity`] = product.quantity_actual;
+      }
+    }
+    
+    const inactiveProductsRef = database.ref('historique_vendeurs');
+    const inactiveProductsSnapshot = await inactiveProductsRef.once('value');
+    const inactiveProducts = inactiveProductsSnapshot.val() || {};
+    
+    const inactiveUpdates = {};
+    for (const key in inactiveProducts) {
+      const product = inactiveProducts[key];
+      if (product.quantity_actual !== undefined) {
+        inactiveUpdates[`historique_vendeurs/${key}/quantity`] = product.quantity_actual;
+      }
+    }
+    
+    await database.ref().update({ ...activeUpdates, ...inactiveUpdates });
+    
+    await recordAction("Paiement administration confirmé", "Quantités mises à jour pour les produits");
+    
+    alert("Paiement confirmé avec succès ! Les quantités ont été mises à jour.");
+    loadData();
+  } catch (error) {
+    console.error("Erreur lors de la confirmation du paiement:", error);
+    alert("Erreur lors de la confirmation: " + error.message);
+  }
+}
+
+async function recordAction(action, details) {
+  if (!currentAdmin) return;
+  
+  const newsItem = {
+    admin: currentAdmin.name,
+    action: action,
+    details: details,
+    timestamp: new Date().getTime()
+  };
+  
+  try {
+    await database.ref('news').push(newsItem);
+    
+    newsItems.unshift(newsItem);
+    updateNewsList();
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement:", error);
+  }
+}
+
+function updateNewsList() {
+  const newsList = document.getElementById('news-list');
+  newsList.innerHTML = '';
+  
+  if (newsItems.length === 0) {
+    newsList.innerHTML = `
+      <div class="text-center py-8 text-gray-500">
+        <i class="ri-information-line ri-xl"></i>
+        <p>Aucune activité récente</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const recentNews = newsItems.slice(0, 10);
+  
+  recentNews.forEach(item => {
+    const date = new Date(item.timestamp);
+    const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}, ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+    
+    const card = document.createElement('div');
+    card.className = 'bg-blue-50 p-4 rounded-lg news-card';
+    card.innerHTML = `
+      <div class="news-card-header p-2 rounded-t-lg mb-2">
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-medium text-gray-800">${item.action}</span>
+          <span class="text-xs text-gray-500">${formattedDate}</span>
+        </div>
+      </div>
+      <p class="text-sm text-gray-700">${item.details}</p>
+      <div class="mt-2 flex items-center">
+        <i class="ri-user-line text-gray-500"></i>
+        <span class="text-xs text-gray-500 ml-1">${item.admin}</span>
+      </div>
+    `;
+    newsList.appendChild(card);
+  });
+}
+
+function logout() {
+  sessionStorage.removeItem('adminName');
+  window.location.href = 'home';
+}
+
+async function loadData() {
+  try {
+    const [confirmedSnapshot, membresSnapshot] = await Promise.all([
+      database.ref('confirmed_adm_member').once('value'),
+      database.ref('membres').once('value')
+    ]);
+    
+    const confirmedData = confirmedSnapshot.val() || {};
+    const membresData = membresSnapshot.val() || {};
+    
+    const usersConfirmed = Object.keys(confirmedData).map(key => {
+      return { id: key, ...confirmedData[key], confirmed: true };
+    });
+    
+    const usersMembres = Object.keys(membresData).map(key => {
+      return { id: key, ...membresData[key], confirmed: false };
+    });
+    
+    users = [...usersConfirmed, ...usersMembres];
+    
+    vendors = users.filter(user => user.role === "vendeur");
+    managers = users.filter(user => user.role === "responsable");
+    professors = users.filter(user => user.role === "professeur");
+    
+    communalManagers = managers.filter(manager => manager.type === "communal");
+    departmentalManagers = managers.filter(manager => manager.type === "departemental");
+    nationalManagers = managers.filter(manager => manager.type === "national");
+    
+    departments = [...new Set(users.map(user => user.departement).filter(Boolean))];
+    
+    // Construire l'objet communesByDepartment
+    communesByDepartment = {};
+    users.forEach(user => {
+      if (user.departement && user.commune) {
+        if (!communesByDepartment[user.departement]) {
+          communesByDepartment[user.departement] = new Set();
+        }
+        communesByDepartment[user.departement].add(user.commune);
+      }
+    });
+    
+    // Convertir les Set en Array et trier
+    for (const dept in communesByDepartment) {
+      communesByDepartment[dept] = Array.from(communesByDepartment[dept]).sort();
+    }
+    
+    const productsSnapshot = await database.ref('produits').once('value');
+    const productsData = productsSnapshot.val() || {};
+    products = Object.keys(productsData).map(key => ({ 
+      id: key, 
+      ...productsData[key] 
+    }));
+    
+    const activeVendorProductsRef = database.ref('produits_vendeurs');
+    const activeVendorProductsSnapshot = await activeVendorProductsRef.once('value');
+    const activeVendorProductsData = activeVendorProductsSnapshot.val() || {};
+    activeVendorProducts = Object.values(activeVendorProductsData);
+    
+    const inactiveVendorProductsRef = database.ref('historique_vendeurs');
+    const inactiveVendorProductsSnapshot = await inactiveVendorProductsRef.once('value');
+    const inactiveVendorProductsData = inactiveVendorProductsSnapshot.val() || {};
+    inactiveVendorProducts = Object.values(inactiveVendorProductsData);
+    
+    const suggestionsSnapshot = await database.ref('suggestions').once('value');
+    const suggestionsData = suggestionsSnapshot.val() || {};
+    suggestions = Object.values(suggestionsData);
+    
+    const profitSnapshot = await database.ref('profit').once('value');
+    const profitData = profitSnapshot.val();
+    if (profitData) {
+      profitSettings = profitData;
+    } else {
+      await database.ref('profit').set(profitSettings);
+    }
+    
+    const newsSnapshot = await database.ref('news').once('value');
+    const newsData = newsSnapshot.val() || {};
+    newsItems = Object.values(newsData).sort((a, b) => b.timestamp - a.timestamp);
+    
+    calculateTopVendors();
+    
+    updateStatistics();
+    
+    updateCharts();
+    
+    updateSuggestions();
+    
+    updatePromotions();
+    
+    updateMembersList();
+    
+    updateNewsList();
+    
+    updateActualDistribution();
+    
+    document.getElementById('loading-overlay').style.display = 'none';
+    
+  } catch (error) {
+    console.error("Erreur lors du chargement des données:", error);
+    alert("Erreur de chargement des données: " + error.message);
+    document.getElementById('loading-overlay').style.display = 'none';
+  }
+}
+
+function calculateTopVendors() {
+  vendorSalesByEmail = {};
+  
+  activeVendorProducts.forEach(product => {
+    const vendorEmail = product.buyerEmail || "Inconnu";
+    
+    if (!vendorSalesByEmail[vendorEmail]) {
+      vendorSalesByEmail[vendorEmail] = 0;
+    }
+    
+    const initialQty = parseInt(product.quantity) || 0;
+    const currentQty = parseInt(product.quantity_actual) || 0;
+    const soldQty = initialQty - currentQty;
+    
+    const productDetails = products.find(p => p.id === product.productId);
+    const price = productDetails ? parseFloat(productDetails.price) || 0 : 0;
+    
+    const salesAmount = soldQty * price;
+    vendorSalesByEmail[vendorEmail] += salesAmount;
+  });
+  
+  inactiveVendorProducts.forEach(product => {
+    const vendorEmail = product.buyerEmail || "Inconnu";
+    
+    if (!vendorSalesByEmail[vendorEmail]) {
+      vendorSalesByEmail[vendorEmail] = 0;
+    }
+    
+    const initialQty = parseInt(product.quantity) || 0;
+    const currentQty = parseInt(product.quantity_actual) || 0;
+    const soldQty = initialQty - currentQty;
+    
+    const productDetails = products.find(p => p.id === product.productId);
+    const price = productDetails ? parseFloat(productDetails.price) || 0 : 0;
+    
+    const salesAmount = soldQty * price;
+    vendorSalesByEmail[vendorEmail] += salesAmount;
+  });
+  
+  topVendors = Object.keys(vendorSalesByEmail)
+    .map(vendorEmail => {
+      const vendor = users.find(u => u.email === vendorEmail);
+      const vendorName = vendor ? `${vendor.nom} ${vendor.prenom}` : vendorEmail;
+      
+      return {
+        name: vendorName,
+        email: vendorEmail,
+        sales: vendorSalesByEmail[vendorEmail],
+        userId: vendor ? vendor.id : null,
+        departement: vendor ? vendor.departement : null,
+        commune: vendor ? vendor.commune : null
+      };
+    })
+    .sort((a, b) => b.sales - a.sales)
+    .slice(0, 10);
+}
+
+function updateStatistics() {
+  totalSalesAmount = 0;
+  let totalProductsSold = 0;
+  
+  activeVendorProducts.forEach(product => {
+    const initialQty = parseInt(product.quantity) || 0;
+    const currentQty = parseInt(product.quantity_actual) || 0;
+    const soldQty = initialQty - currentQty;
+    
+    const productDetails = products.find(p => p.id === product.productId);
+    const price = productDetails ? parseFloat(productDetails.price) || 0 : 0;
+    
+    totalSalesAmount += soldQty * price;
+    totalProductsSold += soldQty;
+  });
+  
+  inactiveVendorProducts.forEach(product => {
+    const initialQty = parseInt(product.quantity) || 0;
+    const currentQty = parseInt(product.quantity_actual) || 0;
+    const soldQty = initialQty - currentQty;
+    
+    const productDetails = products.find(p => p.id === product.productId);
+    const price = productDetails ? parseFloat(productDetails.price) || 0 : 0;
+    
+    totalSalesAmount += soldQty * price;
+    totalProductsSold += soldQty;
+  });
+  
+  document.getElementById('total-users').textContent = users.length.toLocaleString();
+  document.getElementById('total-vendors').textContent = vendors.length.toLocaleString();
+  document.getElementById('total-managers').textContent = managers.length.toLocaleString();
+  document.getElementById('communal-managers').textContent = communalManagers.length.toLocaleString();
+  document.getElementById('departmental-managers').textContent = departmentalManagers.length.toLocaleString();
+  document.getElementById('national-managers').textContent = nationalManagers.length.toLocaleString();
+  document.getElementById('total-sales').textContent = totalSalesAmount.toLocaleString('fr-FR') + ' HTG';
+  document.getElementById('total-products').textContent = totalProductsSold.toLocaleString();
+  document.getElementById('profit-total').textContent = `Total: ${totalSalesAmount.toLocaleString('fr-FR')} HTG`;
+  document.getElementById('total-professors').textContent = professors.length;
+  document.getElementById('current-total-sales').textContent = totalSalesAmount.toLocaleString('fr-FR') + ' HTG';
+  document.getElementById('total-members').textContent = users.length;
+}
+
+async function savePercentages() {
+  const vendorPercent = document.getElementById('vendor-percent').value;
+  const communalPercent = document.getElementById('communal-percent').value;
+  const departmentalPercent = document.getElementById('departmental-percent').value;
+  const nationalPercent = document.getElementById('national-percent').value;
+  
+  const total = parseInt(vendorPercent) + parseInt(communalPercent) + 
+                parseInt(departmentalPercent) + parseInt(nationalPercent);
+  const orjeunPercent = 100 - total;
+  
+  const newProfitSettings = {
+    vendorPercent: parseInt(vendorPercent),
+    communalPercent: parseInt(communalPercent),
+    departmentalPercent: parseInt(departmentalPercent),
+    nationalPercent: parseInt(nationalPercent),
+    orjeunPercent: orjeunPercent
+  };
+  
+  try {
+    await database.ref('profit').set(newProfitSettings);
+    profitSettings = newProfitSettings;
+    
+    const details = `Vendeurs ${vendorPercent}%, Communal ${communalPercent}%, Départemental ${departmentalPercent}%, National ${nationalPercent}%`;
+    await recordAction("Modification des profits", details);
+    
+    showToast('Pourcentages enregistrés avec succès!', 3000);
+    updateCharts();
+    updateActualDistribution();
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement:", error);
+    showToast("Erreur lors de l'enregistrement: " + error.message, 3000);
+  }
+}
+
+async function createSuggestion() {
+  const type = document.getElementById('suggestion-type').value;
+  const title = document.getElementById('suggestion-title').value;
+  const description = document.getElementById('suggestion-description').value;
+  
+  if (!title || !description) {
+    showToast('Veuillez remplir tous les champs', 3000);
+    return;
+  }
+  
+  const newSuggestion = {
+    type,
+    title,
+    description,
+    createdAt: new Date().getTime()
+  };
+  
+  try {
+    const newRef = database.ref('suggestions').push();
+    newSuggestion.id = newRef.key;
+    await newRef.set(newSuggestion);
+    
+    suggestions.push(newSuggestion);
+    updateSuggestions();
+    
+    await recordAction("Nouvelle suggestion", `${type}: ${title}`);
+    
+    document.getElementById('suggestion-title').value = '';
+    document.getElementById('suggestion-description').value = '';
+    
+    showToast('Suggestion créée avec succès!', 3000);
+  } catch (error) {
+    console.error("Erreur lors de la création:", error);
+    showToast("Erreur lors de la création: " + error.message, 3000);
+  }
+}
+
+async function deleteSuggestion(suggestionId) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer cette suggestion ?')) return;
+  
+  try {
+    await database.ref('suggestions/' + suggestionId).remove();
+    suggestions = suggestions.filter(s => s.id !== suggestionId);
+    updateSuggestions();
+    
+    await recordAction("Suppression de suggestion", `ID: ${suggestionId}`);
+    
+    showToast('Suggestion supprimée avec succès!', 3000);
+  } catch (error) {
+    console.error("Erreur lors de la suppression:", error);
+    showToast("Erreur lors de la suppression: " + error.message, 3000);
+  }
+}
+
+async function promoteUser(id, type, region = null) {
+  try {
+    const user = users.find(u => u.id === id || u.email === id);
+    
+    if (!user) {
+      showToast('Utilisateur non trouvé', 3000);
+      return;
+    }
+    
+    let newType = '';
+    let updates = {};
+    let demoteUser = null;
+    
+    switch(type) {
+      case 'vendor':
+        newType = 'communal';
+        
+        demoteUser = communalManagers.find(m => m.region === region);
+        
+        if (demoteUser) {
+          await database.ref('confirmed_adm_member/' + demoteUser.id).update({
+            role: "professeur",
+            type: ""
+          });
+        }
+        
+        updates = {
+          role: "responsable",
+          type: newType,
+          region: region
+        };
+        break;
+        
+      case 'communal':
+        newType = 'departemental';
+        
+        demoteUser = departmentalManagers[0];
+        
+        if (demoteUser) {
+          await database.ref('confirmed_adm_member/' + demoteUser.id).update({
+            role: "professeur",
+            type: ""
+          });
+        }
+        
+        updates = {
+          type: newType
+        };
+        break;
+        
+      case 'departmental':
+        newType = 'national';
+        
+        demoteUser = nationalManagers[0];
+        
+        if (demoteUser) {
+          await database.ref('confirmed_adm_member/' + demoteUser.id).update({
+            role: "professeur",
+            type: ""
+          });
+        }
+        
+        updates = {
+          type: newType
+        };
+        break;
+        
+      default:
+        showToast('Type de promotion invalide', 3000);
+        return;
+    }
+    
+    // Mise à jour de l'utilisateur promu
+    await database.ref('confirmed_adm_member/' + user.id).update(updates);
+    
+    // Vérification et mise à jour dans la table membres
+    if (user.email) {
+      const membresRef = database.ref('membres');
+      const membresSnapshot = await membresRef.orderByChild('email').equalTo(user.email).once('value');
+      const membreData = membresSnapshot.val();
+      
+      if (membreData) {
+        const updatesMembres = {};
+        Object.keys(membreData).forEach(key => {
+          updatesMembres[`membres/${key}/role`] = "responsable";
+          updatesMembres[`membres/${key}/type`] = newType;
+        });
+        
+        await database.ref().update(updatesMembres);
+      }
+    }
+    
+    await recordAction("Promotion d'utilisateur", `${user.nom} ${user.prenom} promu au rôle: Responsable ${newType}`);
+    
+    showToast(`Utilisateur promu avec succès! Nouveau rôle: Responsable ${newType}`, 3000);
+    loadData();
+    
+  } catch (error) {
+    console.error("Erreur lors de la promotion:", error);
+    showToast("Erreur lors de la promotion: " + error.message, 3000);
+  }
+}
+
+async function deleteMember(userId) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ? Cette action est irréversible.')) return;
+  
+  try {
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) {
+      showToast('Membre non trouvé', 3000);
+      return;
+    }
+    
+    if (user.confirmed) {
+      await database.ref('confirmed_adm_member/' + userId).remove();
+    } else {
+      await database.ref('membres/' + userId).remove();
+    }
+    
+    await recordAction("Suppression de membre", `${user.nom} ${user.prenom} (${user.role})`);
+    
+    showToast('Membre supprimé avec succès!', 3000);
+    loadData();
+  } catch (error) {
+    console.error("Erreur lors de la suppression:", error);
+    showToast("Erreur lors de la suppression: " + error.message, 3000);
+  }
+}
+
+function setupTabNavigation() {
+  const navItems = document.querySelectorAll('.nav-item');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const bottomTabs = document.querySelectorAll('.fixed.bottom-0 button');
+  
+  navItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const tabId = this.getAttribute('data-tab');
+      
+      navItems.forEach(navItem => navItem.classList.remove('active'));
+      this.classList.add('active');
+      
+      tabContents.forEach(content => {
+        if (content.id === tabId) {
+          content.classList.add('active');
+        } else {
+          content.classList.remove('active');
+        }
+      });
+      
+      const tabIndex = Array.from(navItems).indexOf(this);
+      bottomTabs.forEach((tab, index) => {
+        tab.classList.remove('text-green-500');
+        tab.classList.add('text-gray-500');
+        if (index === tabIndex) {
+          tab.classList.remove('text-gray-500');
+          tab.classList.add('text-green-500');
+        }
+      });
+    });
+  });
+  
+  bottomTabs.forEach((tab, index) => {
+    tab.addEventListener('click', function() {
+      if (navItems[index]) {
+        navItems[index].click();
+      }
+    });
+  });
+}
+
+function updateCharts() {
+  const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+  
+  if (revenueChart) {
+    revenueChart.destroy();
+  }
+  
+  revenueChart = new Chart(revenueCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Vendeurs', 'Communal', 'Départemental', 'National', 'Orjeun'],
+      datasets: [{
+        label: 'Répartition des profits (HTG)',
+        data: [
+          totalSalesAmount * profitSettings.vendorPercent / 100,
+          totalSalesAmount * profitSettings.communalPercent / 100,
+          totalSalesAmount * profitSettings.departmentalPercent / 100,
+          totalSalesAmount * profitSettings.nationalPercent / 100,
+          totalSalesAmount * profitSettings.orjeunPercent / 100
+        ],
+        backgroundColor: [
+          '#4ade80',
+          '#60a5fa',
+          '#8b5cf6',
+          '#ec4899',
+          '#f59e0b'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return (value / 1000) + 'k HTG';
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+  
+  if (distributionChart) {
+    distributionChart.destroy();
+  }
+  
+  distributionChart = new Chart(distributionCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Vendeurs', 'Professeurs', 'Resp. Communaux', 'Resp. Départementaux', 'Resp. Nationaux'],
+      datasets: [{
+        data: [
+          vendors.length,
+          professors.length,
+          communalManagers.length,
+          departmentalManagers.length,
+          nationalManagers.length
+        ],
+        backgroundColor: [
+          '#4ade80',
+          '#60a5fa',
+          '#8b5cf6',
+          '#ec4899',
+          '#f59e0b'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right'
+        }
+      }
+    }
+  });
+}
+
+function updateSuggestions() {
+  const suggestionsList = document.getElementById('suggestions-list');
+  suggestionsList.innerHTML = '';
+  
+  if (suggestions.length === 0) {
+    suggestionsList.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center py-8 text-gray-500">
+          <i class="ri-information-line ri-xl"></i>
+          <p>Aucune suggestion active</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  suggestions.forEach(suggestion => {
+    const row = document.createElement('tr');
+    row.className = 'border-b hover:bg-gray-50';
+    row.innerHTML = `
+      <td class="px-4 py-3">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          suggestion.type === 'produit' ? 'bg-green-100 text-green-800' : 
+          suggestion.type === 'formation' ? 'bg-blue-100 text-blue-800' : 
+          'bg-purple-100 text-purple-800'
+        }">
+          ${suggestion.type.charAt(0).toUpperCase() + suggestion.type.slice(1)}
+        </span>
+      </td>
+      <td class="px-4 py-3 font-medium">${suggestion.title}</td>
+      <td class="px-4 py-3">${suggestion.description}</td>
+      <td class="px-4 py-3">
+        <button class="delete-suggestion text-red-600 hover:text-red-900 mr-2" data-id="${suggestion.id}">
+          <i class="ri-delete-bin-line ri-lg"></i>
+        </button>
+      </td>
+    `;
+    suggestionsList.appendChild(row);
+  });
+  
+  document.querySelectorAll('.delete-suggestion').forEach(button => {
+    button.addEventListener('click', function() {
+      const suggestionId = this.getAttribute('data-id');
+      deleteSuggestion(suggestionId);
+    });
+  });
+}
+
+function updatePromotions() {
+  const departmentSelect = document.getElementById('department-select');
+  departmentSelect.innerHTML = '<option value="">Choisir un département...</option>';
+  
+  departments.forEach(department => {
+    const option = document.createElement('option');
+    option.value = department;
+    option.textContent = department;
+    departmentSelect.appendChild(option);
+  });
+}
+
+function displayDepartmentHierarchy(department) {
+  if (!department) {
+    document.getElementById('department-hierarchy').innerHTML = `
+      <div class="text-center py-12 text-gray-500">
+        <i class="ri-map-pin-line ri-xl"></i>
+        <p>Sélectionnez un département pour voir la hiérarchie</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const departmentUsers = users.filter(user => 
+    user.departement === department && 
+    (user.role === "responsable" || user.role === "vendeur")
+  );
+  
+  const departmentalManager = departmentUsers.find(user => 
+    user.role === "responsable" && user.type === "departemental"
+  );
+  
+  const communalManagers = departmentUsers.filter(user => 
+    user.role === "responsable" && user.type === "communal"
+  );
+  
+  const vendors = departmentUsers.filter(user => 
+    user.role === "vendeur"
+  );
+  
+  const vendorsByCommune = {};
+  vendors.forEach(vendor => {
+    const commune = vendor.commune || "Sans commune";
+    if (!vendorsByCommune[commune]) {
+      vendorsByCommune[commune] = [];
+    }
+    vendorsByCommune[commune].push(vendor);
+  });
+  
+  const managersByCommune = {};
+  communalManagers.forEach(manager => {
+    const commune = manager.commune || "Sans commune";
+    if (!managersByCommune[commune]) {
+      managersByCommune[commune] = manager;
+    }
+  });
+  
+  let html = `
+    <div class="hierarchy-section">
+      <div class="hierarchy-header">
+        <h3 class="hierarchy-title">Département: ${department}</h3>
+        <span class="role-tag role-tag-departmental">Départemental</span>
+      </div>
+  `;
+  
+  if (departmentalManager) {
+    html += `
+      <div class="user-card">
+        <div class="user-avatar">${getInitials(departmentalManager.nom, departmentalManager.prenom)}</div>
+        <div class="user-info">
+          <div class="user-name">${departmentalManager.nom} ${departmentalManager.prenom}</div>
+          <div class="user-email">${departmentalManager.email}</div>
+        </div>
+        <button class="promote-btn" data-id="${departmentalManager.id}" data-type="departmental">
+          Promouvoir National
+        </button>
+      </div>
+    `;
+  } else {
+    html += `<p class="text-gray-500 italic">Aucun responsable départemental</p>`;
+  }
+  
+  html += `</div><div class="hierarchy-section">`;
+  
+  const communes = [...new Set([...Object.keys(vendorsByCommune), ...Object.keys(managersByCommune)])];
+  
+  if (communes.length === 0) {
+    html += `<p class="text-gray-500 italic">Aucune commune trouvée dans ce département</p>`;
+  } else {
+    communes.forEach(commune => {
+      const manager = managersByCommune[commune];
+      const communeVendors = vendorsByCommune[commune] || [];
+      
+      html += `
+        <div class="commune-section">
+          <div class="hierarchy-header">
+            <h4 class="hierarchy-title">Commune: ${commune}</h4>
+            <span class="role-tag role-tag-communal">Communal</span>
+          </div>
+      `;
+      
+      if (manager) {
+        html += `
+          <div class="user-card">
+            <div class="user-avatar">${getInitials(manager.nom, manager.prenom)}</div>
+            <div class="user-info">
+              <div class="user-name">${manager.nom} ${manager.prenom}</div>
+              <div class="user-email">${manager.email}</div>
+            </div>
+            <button class="promote-btn" data-id="${manager.id}" data-type="communal">
+              Promouvoir Départemental
+            </button>
+          </div>
+        `;
+      } else {
+        html += `<p class="text-gray-500 italic mb-3">Aucun responsable communal</p>`;
+      }
+      
+      if (communeVendors.length > 0) {
+        html += `<div class="vendor-list mt-3">`;
+        communeVendors.forEach(vendor => {
+          const sales = vendorSalesByEmail[vendor.email] || 0;
+          html += `
+            <div class="user-card">
+              <div class="user-avatar">${getInitials(vendor.nom, vendor.prenom)}</div>
+              <div class="user-info">
+                <div class="user-name">${vendor.nom} ${vendor.prenom}</div>
+                <div class="user-email">Ventes: ${sales.toLocaleString('fr-FR')} HTG</div>
+              </div>
+              <button class="promote-btn" data-id="${vendor.id}" data-type="vendor">
+                Promouvoir Communal
+              </button>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      } else {
+        html += `<p class="text-gray-500 italic">Aucun vendeur dans cette commune</p>`;
+      }
+      
+      html += `</div>`;
+    });
+  }
+  
+  html += `</div>`;
+  
+  const hierarchyContainer = document.getElementById('department-hierarchy');
+  hierarchyContainer.innerHTML = html;
+  
+  hierarchyContainer.querySelectorAll('.promote-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const id = this.getAttribute('data-id');
+      const type = this.getAttribute('data-type');
+      
+      if (type === 'vendor') {
+        currentPromotion = { userId: id, type: type };
+        document.getElementById('region-modal').classList.remove('hidden');
+      } else {
+        promoteUser(id, type);
+      }
+    });
+  });
+}
+
+function getInitials(nom, prenom) {
+  if (!nom || !prenom) return "??";
+  return `${nom.charAt(0)}${prenom.charAt(0)}`;
+}
+
+function setupPercentageSliders() {
+  const vendorSlider = document.getElementById('vendor-percent');
+  const communalSlider = document.getElementById('communal-percent');
+  const departmentalSlider = document.getElementById('departmental-percent');
+  const nationalSlider = document.getElementById('national-percent');
+  
+  vendorSlider.value = profitSettings.vendorPercent;
+  communalSlider.value = profitSettings.communalPercent;
+  departmentalSlider.value = profitSettings.departmentalPercent;
+  nationalSlider.value = profitSettings.nationalPercent;
+  
+  document.getElementById('vendor-percent-value').textContent = profitSettings.vendorPercent + '%';
+  document.getElementById('communal-percent-value').textContent = profitSettings.communalPercent + '%';
+  document.getElementById('departmental-percent-value').textContent = profitSettings.departmentalPercent + '%';
+  document.getElementById('national-percent-value').textContent = profitSettings.nationalPercent + '%';
+  
+  const total = profitSettings.vendorPercent + profitSettings.communalPercent + 
+               profitSettings.departmentalPercent + profitSettings.nationalPercent;
+  const orjeunPercent = 100 - total;
+  profitSettings.orjeunPercent = orjeunPercent;
+  
+  document.getElementById('orjeun-percent-value').textContent = orjeunPercent + '%';
+  
+  updateActualDistribution();
+  
+  vendorSlider.addEventListener('input', updatePercentageValues);
+  communalSlider.addEventListener('input', updatePercentageValues);
+  departmentalSlider.addEventListener('input', updatePercentageValues);
+  nationalSlider.addEventListener('input', updatePercentageValues);
+}
+
+function updatePercentageValues() {
+  const vendorPercent = document.getElementById('vendor-percent').value;
+  const communalPercent = document.getElementById('communal-percent').value;
+  const departmentalPercent = document.getElementById('departmental-percent').value;
+  const nationalPercent = document.getElementById('national-percent').value;
+  
+  document.getElementById('vendor-percent-value').textContent = vendorPercent + '%';
+  document.getElementById('communal-percent-value').textContent = communalPercent + '%';
+  document.getElementById('departmental-percent-value').textContent = departmentalPercent + '%';
+  document.getElementById('national-percent-value').textContent = nationalPercent + '%';
+  
+  const total = parseInt(vendorPercent) + parseInt(communalPercent) + 
+                parseInt(departmentalPercent) + parseInt(nationalPercent);
+  const orjeunPercent = 100 - total;
+  
+  document.getElementById('orjeun-percent-value').textContent = orjeunPercent + '%';
+  
+  updateActualDistribution();
+}
+
+function updateActualDistribution() {
+  const vendorAmount = (totalSalesAmount * profitSettings.vendorPercent / 100);
+  const communalAmount = (totalSalesAmount * profitSettings.communalPercent / 100);
+  const departmentalAmount = (totalSalesAmount * profitSettings.departmentalPercent / 100);
+  const nationalAmount = (totalSalesAmount * profitSettings.nationalPercent / 100);
+  const orjeunAmount = (totalSalesAmount * profitSettings.orjeunPercent / 100);
+  
+  document.getElementById('vendor-actual').textContent = vendorAmount.toLocaleString('fr-FR') + ' HTG';
+  document.getElementById('communal-actual').textContent = communalAmount.toLocaleString('fr-FR') + ' HTG';
+  document.getElementById('departmental-actual').textContent = departmentalAmount.toLocaleString('fr-FR') + ' HTG';
+  document.getElementById('national-actual').textContent = nationalAmount.toLocaleString('fr-FR') + ' HTG';
+  document.getElementById('orjeun-actual').textContent = orjeunAmount.toLocaleString('fr-FR') + ' HTG';
+}
+
+function filterAdminMembers() {
+  const searchTerm = document.getElementById('admin-search').value.toLowerCase();
+  const selectedDept = document.getElementById('department-filter').value;
+  const selectedCommune = document.getElementById('commune-filter').value;
+  
+  const filteredMembers = users.filter(user => {
+    // Filtre par recherche
+    const matchesSearch = 
+      (user.nom && user.nom.toLowerCase().includes(searchTerm)) ||
+      (user.prenom && user.prenom.toLowerCase().includes(searchTerm)) ||
+      (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+      (user.phone && user.phone.includes(searchTerm));
+    
+    // Filtre par département
+    const matchesDept = selectedDept ? (user.departement === selectedDept) : true;
+    
+    // Filtre par commune
+    const matchesCommune = selectedCommune ? (user.commune === selectedCommune) : true;
+    
+    return matchesSearch && matchesDept && matchesCommune;
+  });
+  
+  renderMembersList(filteredMembers);
+}
+
+function updateCommuneFilter() {
+  const deptFilter = document.getElementById('department-filter').value;
+  const communeFilter = document.getElementById('commune-filter');
+  
+  communeFilter.innerHTML = '<option value="">Toutes les communes</option>';
+  
+  if (deptFilter && communesByDepartment[deptFilter]) {
+    communeFilter.disabled = false;
+    communesByDepartment[deptFilter].forEach(commune => {
+      const option = document.createElement('option');
+      option.value = commune;
+      option.textContent = commune;
+      communeFilter.appendChild(option);
+    });
+  } else {
+    communeFilter.disabled = true;
+  }
+}
+
+function resetFilters() {
+  document.getElementById('department-filter').value = '';
+  document.getElementById('commune-filter').value = '';
+  document.getElementById('commune-filter').disabled = true;
+  document.getElementById('admin-search').value = '';
+  
+  filterAdminMembers();
+}
+
+function updateMembersList() {
+  document.getElementById('total-members').textContent = users.length;
+  
+  // Initialiser le filtre des départements
+  const departmentFilter = document.getElementById('department-filter');
+  departmentFilter.innerHTML = '<option value="">Tous les départements</option>';
+  departments.forEach(dept => {
+    const option = document.createElement('option');
+    option.value = dept;
+    option.textContent = dept;
+    departmentFilter.appendChild(option);
+  });
+  
+  // Réinitialiser les autres filtres
+  document.getElementById('commune-filter').innerHTML = '<option value="">Toutes les communes</option>';
+  document.getElementById('commune-filter').disabled = true;
+  document.getElementById('admin-search').value = '';
+  
+  // Afficher tous les membres initialement
+  renderMembersList(users);
+}
+
+function renderMembersList(membersArray) {
+  const membersList = document.getElementById('members-list');
+  membersList.innerHTML = '';
+  
+  if (membersArray.length === 0) {
+    membersList.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center py-8 text-gray-500">
+          <i class="ri-information-line ri-xl"></i>
+          <p>Aucun membre trouvé</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  membersArray.forEach(user => {
+    const row = document.createElement('tr');
+    row.className = 'border-b hover:bg-gray-50';
+    
+    let roleBadgeClass = '';
+    let roleText = '';
+    
+    if (user.role === "vendeur") {
+      roleBadgeClass = 'role-vendeur';
+      roleText = 'Vendeur';
+    } else if (user.role === "professeur") {
+      roleBadgeClass = 'role-professeur';
+      roleText = 'Professeur';
+    } else if (user.role === "responsable") {
+      if (user.type === "communal") {
+        roleBadgeClass = 'role-communal';
+        roleText = 'Resp. Communal';
+      } else if (user.type === "departemental") {
+        roleBadgeClass = 'role-departemental';
+        roleText = 'Resp. Départemental';
+      } else if (user.type === "national") {
+        roleBadgeClass = 'role-national';
+        roleText = 'Resp. National';
+      }
+    }
+    
+    row.innerHTML = `
+      <td class="px-4 py-3 font-medium">${user.nom || ''} ${user.prenom || ''}</td>
+      <td class="px-4 py-3">${user.email || ''}</td>
+      <td class="px-4 py-3">${user.phone || '-'}</td>
+      <td class="px-4 py-3">
+        <span class="role-badge ${roleBadgeClass}">${roleText}</span>
+      </td>
+      <td class="px-4 py-3">${user.departement || '-'}</td>
+      <td class="px-4 py-3">${user.commune || '-'}</td>
+      <td class="px-4 py-3">
+        <button class="delete-member text-red-600 hover:text-red-900" data-id="${user.id}">
+          <i class="ri-delete-bin-line ri-lg"></i>
+        </button>
+      </td>
+    `;
+    membersList.appendChild(row);
+  });
+  
+  document.querySelectorAll('.delete-member').forEach(button => {
+    button.addEventListener('click', function() {
+      const userId = this.getAttribute('data-id');
+      deleteMember(userId);
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initApp();
+});
+</script>
+</body>
+</html>

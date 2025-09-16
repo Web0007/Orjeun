@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil Utilisateur</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                primary: '#4F46E5',
+                secondary: '#10B981',
+                accent: '#8B5CF6',
+                gray: {
+                    200: '#e5e7eb',
+                    300: '#d1d5db'
+                }
+            },
+            borderRadius: {
+                'none': '0px',
+                'sm': '4px',
+                DEFAULT: '8px',
+                'md': '12px',
+                'lg': '16px',
+                'xl': '20px',
+                '2xl': '24px',
+                '3xl': '32px',
+                'full': '9999px',
+                'button': '8px'
+            }
+        }
+    }
+}
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9fafb;
+}
+.profile-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    background: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+}
+.input-field {
+    @apply w-full px-3 py-2 border-2 border-gray-300 rounded-button text-sm focus:border-primary focus:ring-0 transition-colors;
+}
+.password-field {
+    @apply w-full px-3 py-2 border-2 border-gray-300 rounded-button text-sm focus:border-primary focus:ring-0 transition-colors;
+}
+.loader {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 4px solid #4F46E5;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Loader -->
+<div id="loader" class="fixed inset-0 bg-white bg-opacity-90 z-50 flex flex-col items-center justify-center">
+    <div class="loader"></div>
+    <p class="mt-4 text-gray-600">Chargement des données...</p>
+</div>
+
+<div class="fixed top-0 w-full bg-white shadow-sm z-40">
+    <div class="flex items-center justify-between px-4 py-3">
+        <div class="flex items-center">
+            <h1 class="text-xl font-['Pacifico'] text-primary">Orjeun</h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span id="userNameNav" class="text-sm font-medium text-primary"></span>
+        </div>
+    </div>
+</div>
+
+<div id="content" class="pt-16 pb-16 px-4 hidden">
+    <div class="profile-card p-4 mb-4">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold">Profil Utilisateur</h2>
+        </div>
+        
+        <div class="profile-card bg-gray-50 p-4 rounded-lg mb-4">
+            <div class="flex items-center">
+                <div class="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-full mr-4">
+                    <i class="ri-user-line text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 id="userFullName" class="font-medium text-lg"></h3>
+                    <p id="userEmail" class="text-sm text-gray-600"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-card bg-white p-4 rounded-lg mb-4">
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="font-medium">Localisation</h4>
+                <button onclick="toggleEdit('region')" class="text-primary text-sm flex items-center">
+                    <i class="ri-edit-line mr-1"></i> Modifier
+                </button>
+            </div>
+            <div id="regionDisplay" class="text-sm text-gray-600"></div>
+            <form id="regionForm" class="hidden mt-3" onsubmit="updateRegion(event)">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm mb-1">Département</label>
+                        <select id="departmentSelect" class="input-field" required onchange="loadCommunes(this.value)">
+                            <option value="">Sélectionnez un département</option>
+                            <!-- Les départements seront chargés ici -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">Commune</label>
+                        <select id="communeSelect" class="input-field" required disabled>
+                            <option value="">Sélectionnez d'abord un département</option>
+                            <!-- Les communes seront chargées ici -->
+                        </select>
+                    </div>
+                    <div class="flex space-x-3 mt-4">
+                        <button type="button" onclick="toggleEdit('region')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-button text-sm">Annuler</button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-button text-sm">Enregistrer</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="profile-card bg-white p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="font-medium">Sécurité du Compte</h4>
+                <button onclick="toggleEdit('password')" class="text-primary text-sm flex items-center">
+                    <i class="ri-edit-line mr-1"></i> Modifier
+                </button>
+            </div>
+            <form id="passwordForm" class="hidden" onsubmit="updatePassword(event)">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm mb-1">Mot de passe actuel</label>
+                        <input type="password" id="currentPassword" class="password-field" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">Nouveau mot de passe</label>
+                        <input type="password" id="newPassword" class="password-field" required minlength="6">
+                    </div>
+                    <div class="flex space-x-3 mt-4">
+                        <button type="button" onclick="toggleEdit('password')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-button text-sm">Annuler</button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-button text-sm">Enregistrer</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Tab Bar -->
+<div class="fixed bottom-0 w-full bg-white border-t border-gray-200 px-2 py-1 grid grid-cols-3">
+    <a href="market.html" class="flex flex-col items-center justify-center py-1 text-gray-500 cursor-pointer">
+        <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ri-store-2-fill ri-lg"></i>
+        </div>
+        <span class="text-xs mt-1">Produits</span>
+    </a>
+    <a href="stat.html" class="flex flex-col items-center justify-center py-1 text-gray-500 cursor-pointer">
+        <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ri-line-chart-line ri-lg"></i>
+        </div>
+        <span class="text-xs mt-1">Statistiques</span>
+    </a>
+    <a href="profil.html" class="flex flex-col items-center justify-center py-1 text-primary cursor-pointer">
+        <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ri-user-line ri-lg"></i>
+        </div>
+        <span class="text-xs mt-1">Profil</span>
+    </a>
+</div>
+
+<div id="toast" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg opacity-0 transition-opacity duration-300 hidden">
+    <p id="toastMessage"></p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const firebaseConfig = {
+        apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+        authDomain: "orjeun-9dec4.firebaseapp.com",
+        databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+        projectId: "orjeun-9dec4",
+        storageBucket: "orjeun-9dec4.appspot.com",
+        messagingSenderId: "979782321937",
+        appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+        measurementId: "G-G316HCYF9E"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const loader = document.getElementById('loader');
+    const content = document.getElementById('content');
+    
+    // Afficher le loader immédiatement
+    loader.classList.remove('hidden');
+    content.classList.add('hidden');
+    
+    let currentUser = null;
+    let departments = [];
+    let communes = {};
+
+    const userEmail = sessionStorage.getItem('userEmail');
+    const userPassword = sessionStorage.getItem('userPassword');
+
+    if (!userEmail || !userPassword) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // Fonction pour charger les départements
+    async function loadDepartments() {
+        try {
+            const snapshot = await database.ref('region_nationale').once('value');
+            departments = Object.keys(snapshot.val());
+            const departmentSelect = document.getElementById('departmentSelect');
+            
+            // Ajouter les options
+            departments.forEach(department => {
+                const option = document.createElement('option');
+                option.value = department;
+                option.textContent = department;
+                departmentSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Erreur lors du chargement des départements:", error);
+            showToast('Erreur lors du chargement des départements');
+        }
+    }
+
+    // Fonction pour charger les communes d'un département
+    window.loadCommunes = async function(department) {
+        if (!department) return;
+        
+        const communeSelect = document.getElementById('communeSelect');
+        communeSelect.disabled = true;
+        communeSelect.innerHTML = '<option value="">Chargement des communes...</option>';
+        
+        try {
+            const snapshot = await database.ref(`region_nationale/${department}`).once('value');
+            const communesList = Object.keys(snapshot.val());
+            
+            communeSelect.innerHTML = '';
+            communesList.forEach(commune => {
+                const option = document.createElement('option');
+                option.value = commune;
+                option.textContent = commune;
+                communeSelect.appendChild(option);
+            });
+            
+            communeSelect.disabled = false;
+            
+            // Pré-sélectionner la commune de l'utilisateur si elle existe
+            if (currentUser && currentUser.commune) {
+                communeSelect.value = currentUser.commune;
+            }
+        } catch (error) {
+            console.error("Erreur lors du chargement des communes:", error);
+            communeSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+            showToast('Erreur lors du chargement des communes');
+        }
+    }
+
+    // Charger les données utilisateur
+    database.ref('confirmed_adm_member').once('value').then(snapshot => {
+        const users = snapshot.val();
+        for (const key in users) {
+            if (users[key].email === userEmail && users[key].password === userPassword) {
+                currentUser = { ...users[key], id: key };
+                loadProfileData(currentUser);
+                break;
+            }
+        }
+        
+        if (!currentUser) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        // Charger les départements après avoir trouvé l'utilisateur
+        loadDepartments().then(() => {
+            // Cacher le loader et afficher le contenu
+            loader.classList.add('hidden');
+            content.classList.remove('hidden');
+        });
+    }).catch(error => {
+        console.error("Erreur d'authentification:", error);
+        loader.innerHTML = `
+            <div class="text-center">
+                <i class="ri-error-warning-line text-4xl text-red-500"></i>
+                <p class="mt-4 text-gray-700">Erreur d'authentification</p>
+                <p class="text-sm text-gray-500 mt-2">Veuillez réessayer</p>
+            </div>
+        `;
+    });
+
+    function loadProfileData(user) {
+        document.getElementById('userFullName').textContent = `${user.prenom} ${user.nom}`;
+        document.getElementById('userNameNav').textContent = `${user.prenom} ${user.nom}`;
+        document.getElementById('userEmail').textContent = user.email;
+        
+        // Afficher la localisation si elle existe
+        let locationText = 'Non spécifiée';
+        if (user.departement) {
+            locationText = user.departement;
+            if (user.commune) {
+                locationText += `, ${user.commune}`;
+            }
+        }
+        document.getElementById('regionDisplay').textContent = locationText;
+        
+        // Pré-remplir les sélecteurs si des valeurs existent
+        if (user.departement) {
+            document.getElementById('departmentSelect').value = user.departement;
+            // Charger les communes pour ce département
+            window.loadCommunes(user.departement);
+        }
+    }
+
+    window.toggleEdit = (section) => {
+        const form = document.getElementById(`${section}Form`);
+        const display = document.getElementById(`${section}Display`);
+        form.classList.toggle('hidden');
+        display.classList.toggle('hidden');
+    };
+
+    window.updateRegion = async (e) => {
+        e.preventDefault();
+        const department = document.getElementById('departmentSelect').value;
+        const commune = document.getElementById('communeSelect').value;
+        
+        if (!department || !commune) {
+            showToast('Veuillez sélectionner un département et une commune');
+            return;
+        }
+        
+        try {
+            await database.ref(`confirmed_adm_member/${currentUser.id}`).update({ 
+                departement: department,
+                commune: commune
+            });
+            
+            // Mettre à jour les données locales
+            currentUser.departement = department;
+            currentUser.commune = commune;
+            
+            // Mettre à jour l'affichage
+            document.getElementById('regionDisplay').textContent = `${department}, ${commune}`;
+            
+            toggleEdit('region');
+            showToast('Localisation mise à jour avec succès');
+        } catch (error) {
+            showToast('Erreur lors de la mise à jour');
+            console.error(error);
+        }
+    };
+
+    window.updatePassword = async (e) => {
+        e.preventDefault();
+        const currentPass = document.getElementById('currentPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+        const currentPasswordField = document.getElementById('currentPassword');
+
+        currentPasswordField.classList.remove('border-red-500');
+
+        if (currentPass !== currentUser.password) {
+            showToast('Mot de passe actuel incorrect');
+            currentPasswordField.classList.add('border-red-500');
+            return;
+        }
+
+        try {
+            await database.ref(`confirmed_adm_member/${currentUser.id}`).update({ password: newPass });
+            currentUser.password = newPass;
+            sessionStorage.setItem('userPassword', newPass);
+            toggleEdit('password');
+            showToast('Mot de passe mis à jour avec succès');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+        } catch (error) {
+            showToast('Erreur lors de la mise à jour');
+            console.error(error);
+        }
+    };
+
+    window.showToast = (message, duration = 3000) => {
+        const toast = document.getElementById('toast');
+        toast.querySelector('#toastMessage').textContent = message;
+        toast.classList.remove('hidden');
+        toast.style.opacity = '1';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.classList.add('hidden'), 300);
+        }, duration);
+    };
+});
+</script>
+</body>
+</html>

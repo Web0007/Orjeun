@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Carte Chauffeur (gratuite)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+  <style>
+    body { margin: 0; }
+    #map-container { height: 300px; transition: height 0.4s; }
+    #map-container.fullscreen { height: 100vh; }
+    #map { height: 100%; }
+    #toggleMapBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 999;
+      background: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map-container">
+  <button id="toggleMapBtn">🗖 Agrandir</button>
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.min.js"></script>
+
+<script>
+  const chauffeur = { lat: 18.541, lon: -72.338 };
+  const client = { lat: 18.552, lon: -72.343 };
+
+  const map = L.map('map').setView([chauffeur.lat, chauffeur.lon], 14);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Marqueurs
+  L.marker([chauffeur.lat, chauffeur.lon]).addTo(map).bindPopup("🚗 Chauffeur");
+  L.marker([client.lat, client.lon]).addTo(map).bindPopup("📍 Client");
+
+  // Tracé de l'itinéraire (gratos)
+  L.Routing.control({
+    waypoints: [
+      L.latLng(chauffeur.lat, chauffeur.lon),
+      L.latLng(client.lat, client.lon)
+    ],
+    lineOptions: {
+      styles: [{ color: 'blue', weight: 5 }]
+    },
+    routeWhileDragging: false,
+    addWaypoints: false,
+    draggableWaypoints: false,
+    createMarker: () => null // désactive les marqueurs doublons
+  }).addTo(map);
+
+  // Plein écran toggle
+  const btn = document.getElementById("toggleMapBtn");
+  const container = document.getElementById("map-container");
+  btn.onclick = () => {
+    container.classList.toggle("fullscreen");
+    btn.textContent = container.classList.contains("fullscreen") ? "🗕 Réduire" : "🗖 Agrandir";
+    setTimeout(() => map.invalidateSize(), 300);
+  };
+</script>
+
+</body>
+</html>

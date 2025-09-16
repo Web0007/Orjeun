@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orjeun - Administration</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+            authDomain: "orjeun-9dec4.firebaseapp.com",
+            databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+            projectId: "orjeun-9dec4",
+            storageBucket: "orjeun-9dec4.appspot.com",
+            messagingSenderId: "979782321937",
+            appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+            measurementId: "G-G316HCYF9E"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                primary: {
+                  50: '#f0fdf4',
+                  100: '#dcfce7',
+                  200: '#bbf7d0',
+                  300: '#86efac',
+                  400: '#4ade80',
+                  500: '#22c55e',
+                  600: '#16a34a',
+                  700: '#15803d',
+                  800: '#166534',
+                  900: '#14532d',
+                },
+                secondary: {
+                  50: '#fffbeb',
+                  100: '#fef3c7',
+                  200: '#fde68a',
+                  300: '#fcd34d',
+                  400: '#fbbf24',
+                  500: '#f59e0b',
+                  600: '#d97706',
+                  700: '#b45309',
+                  800: '#92400e',
+                  900: '#78350f',
+                },
+                royal: {
+                  50: '#eff6ff',
+                  100: '#dbeafe',
+                  200: '#bfdbfe',
+                  300: '#93c5fd',
+                  400: '#60a5fa',
+                  500: '#3b82f6',
+                  600: '#2563eb',
+                  700: '#1d4ed8',
+                  800: '#1e40af',
+                  900: '#1e3a8a',
+                },
+                indigo: {
+                  50: '#eef2ff',
+                  100: '#e0e7ff',
+                  200: '#c7d2fe',
+                  300: '#a5b4fc',
+                  400: '#818cf8',
+                  500: '#6366f1',
+                  600: '#4f46e5',
+                  700: '#4338ca',
+                  800: '#3730a3',
+                  900: '#312e81',
+                }
+              },
+              borderRadius: {
+                'none': '0px',
+                'sm': '4px',
+                DEFAULT: '8px',
+                'md': '12px',
+                'lg': '16px',
+                'xl': '20px',
+                '2xl': '24px',
+                '3xl': '32px',
+                'full': '9999px',
+                'button': '8px'
+              }
+            }
+          }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f0fdf4, #eff6ff);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .logo-font {
+            font-family: 'Pacifico', cursive;
+        }
+        
+        .password-container {
+            transition: all 0.5s ease;
+        }
+        
+        .dashboard-container {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .dashboard-show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .tool-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .session-warning {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 15px 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .session-warning.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .session-timer {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #fef3c7;
+            border-radius: 50%;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #b45309;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+        
+        .password-input {
+            transition: all 0.3s ease;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #3b82f6;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 10px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .admin-name-display {
+            background: #f0fdf4;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        
+        .admin-name-display i {
+            margin-right: 6px;
+            color: #22c55e;
+        }
+        
+        .admin-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+        }
+        
+        .admin-message.success {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #22c55e;
+        }
+        
+        .admin-message.error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="passwordSection" class="password-container min-h-screen flex items-center justify-center px-4 py-12">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-primary-500 p-6 text-center">
+                <h1 class="text-3xl font-bold text-white logo-font">Orjeun</h1>
+                <p class="text-primary-100 mt-2">Administration</p>
+            </div>
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <i class="ri-shield-keyhole-line text-royal-500 text-5xl"></i>
+                    <h2 class="text-2xl font-bold text-gray-800 mt-4">Accès Administrateur</h2>
+                    <p class="text-gray-600 mt-2">Veuillez entrer le mot de passe pour accéder au tableau de bord</p>
+                </div>
+                
+                <form id="loginForm">
+                    <div class="mb-6">
+                        <label for="password" class="block text-gray-700 font-medium mb-2">Mot de passe</label>
+                        <div class="relative">
+                            <input type="password" id="password" class="password-input w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="Entrez le mot de passe">
+                            <button type="button" class="absolute right-3 top-3 text-gray-500" id="togglePassword">
+                                <i class="ri-eye-off-line"></i>
+                            </button>
+                        </div>
+                        <p id="errorMessage" class="text-red-500 text-sm mt-2 hidden">Mot de passe incorrect. Veuillez réessayer.</p>
+                    </div>
+                    
+                    <div class="flex justify-center mb-4">
+                        <div id="loginSpinner" class="spinner"></div>
+                    </div>
+                    
+                    <button type="submit" id="loginButton" class="w-full bg-royal-500 hover:bg-royal-600 text-white font-semibold py-3 px-4 rounded-xl transition duration-300 transform hover:scale-[1.02]">
+                        Se connecter
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div id="dashboardSection" class="dashboard-container hidden">
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16 items-center">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 flex items-center">
+                            <span class="text-primary-600 text-2xl font-bold logo-font">Orjeun</span>
+                            <span class="ml-2 bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full">ADMIN</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="admin-name-display">
+                            <i class="ri-user-line"></i>
+                            <span id="adminDisplayName">Administrateur</span>
+                        </div>
+                        <div class="flex items-center mr-4 text-gray-600">
+                            <i class="ri-time-line mr-1"></i>
+                            <span id="sessionTimer">10:00</span>
+                        </div>
+                        <div class="ml-3 relative">
+                            <button id="logoutButton" class="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900">
+                                <i class="ri-logout-circle-r-line mr-1"></i> Déconnexion
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="mb-10">
+                    <h1 class="text-3xl font-bold text-gray-900">Tableau de bord d'administration</h1>
+                    <p class="mt-2 text-gray-600">Gérez toutes les activités de la plateforme Orjeun</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="tool-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="p-6">
+                            <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center mb-4">
+                                <i class="ri-bar-chart-line text-primary-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Statistiques & Profits</h3>
+                            <p class="mt-2 text-gray-600">Affiche les statistiques des vendeurs et responsables, permet d'ajuster leurs profits et d'analyser les performances.</p>
+                            <div class="mt-6">
+                                <a href="chef" class="inline-flex items-center px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-xl transition">
+                                    Accéder <i class="ri-arrow-right-line ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="p-6">
+                            <div class="w-12 h-12 rounded-full bg-secondary-100 flex items-center justify-center mb-4">
+                                <i class="ri-mic-line text-secondary-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Programmation Radio</h3>
+                            <p class="mt-2 text-gray-600">Planification des horaires de diffusion pour la radio. Créez et gérez le calendrier des émissions et des animateurs.</p>
+                            <div class="mt-6">
+                                <a href="radio_adm" class="inline-flex items-center px-4 py-2 bg-secondary-500 hover:bg-secondary-600 text-white font-medium rounded-xl transition">
+                                    Accéder <i class="ri-arrow-right-line ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="p-6">
+                            <div class="w-12 h-12 rounded-full bg-royal-100 flex items-center justify-center mb-4">
+                                <i class="ri-money-dollar-circle-line text-royal-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Gestion des Dettes</h3>
+                            <p class="mt-2 text-gray-600">Suivez et gérez les vendeurs ayant acheté des produits avec emprunt. Enregistrez les remboursements et suivez les soldes.</p>
+                            <div class="mt-6">
+                                <a href="dette" class="inline-flex items-center px-4 py-2 bg-royal-500 hover:bg-royal-600 text-white font-medium rounded-xl transition">
+                                    Accéder <i class="ri-arrow-right-line ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="p-6">
+                            <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center mb-4">
+                                <i class="ri-user-add-line text-primary-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Confirmations</h3>
+                            <p class="mt-2 text-gray-600">Approuvez les inscriptions des vendeurs, professeurs et responsables souhaitant rejoindre la plateforme Orjeun.</p>
+                            <div class="mt-6">
+                                <a href="confirm" class="inline-flex items-center px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-xl transition">
+                                    Accéder <i class="ri-arrow-right-line ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="p-6">
+                            <div class="w-12 h-12 rounded-full bg-secondary-100 flex items-center justify-center mb-4">
+                                <i class="ri-file-text-line text-secondary-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Rapports de Formation</h3>
+                            <p class="mt-2 text-gray-600">Consultez les rapports créés par les professeurs pour les formations. Analysez les résultats et les feedbacks.</p>
+                            <div class="mt-6">
+                                <a href="rapport_recu" class="inline-flex items-center px-4 py-2 bg-secondary-500 hover:bg-secondary-600 text-white font-medium rounded-xl transition">
+                                    Accéder <i class="ri-arrow-right-line ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="p-6">
+                            <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                                <i class="ri-group-line text-indigo-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Création de Forums</h3>
+                            <p class="mt-2 text-gray-600">Créez et gérez des forums de discussion pour les membres de la plateforme. Organisez les discussions par catégories.</p>
+                            <div class="mt-6">
+                                <a href="Forum" class="inline-flex items-center px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition">
+                                    Accéder <i class="ri-arrow-right-line ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nouveau lien pour poster des produits -->
+                    <div class="tool-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="p-6">
+                            <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center mb-4">
+                                <i class="ri-shopping-bag-line text-primary-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Poster des Produits</h3>
+                            <p class="mt-2 text-gray-600">Ajoutez de nouveaux produits à vendre sur la plateforme Orjeun.</p>
+                            <div class="mt-6">
+                                <a href="product" class="inline-flex items-center px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-xl transition">
+                                    Accéder <i class="ri-arrow-right-line ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nouveau lien pour confirmer les achats -->
+                    <div class="tool-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="p-6">
+                            <div class="w-12 h-12 rounded-full bg-secondary-100 flex items-center justify-center mb-4">
+                                <i class="ri-checkbox-circle-line text-secondary-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Confirmer les Achats</h3>
+                            <p class="mt-2 text-gray-600">Validez ou refusez les demandes d'achat de produits par les vendeurs.</p>
+                            <div class="mt-6">
+                                <a href="Confirm_product" class="inline-flex items-center px-4 py-2 bg-secondary-500 hover:bg-secondary-600 text-white font-medium rounded-xl transition">
+                                    Accéder <i class="ri-arrow-right-line ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nouveau lien pour la gestion financière -->
+                    <div class="tool-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="p-6">
+                            <div class="w-12 h-12 rounded-full bg-royal-100 flex items-center justify-center mb-4">
+                                <i class="ri-wallet-line text-royal-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Gestion Financière</h3>
+                            <p class="mt-2 text-gray-600">Supervisez et gérez la balance financière de la plateforme Orjeun.</p>
+                            <div class="mt-6">
+                                <a href="Finance" class="inline-flex items-center px-4 py-2 bg-royal-500 hover:bg-royal-600 text-white font-medium rounded-xl transition">
+                                    Accéder <i class="ri-arrow-right-line ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="bg-white border-t border-gray-200 mt-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="md:flex md:items-center md:justify-between">
+                    <div class="flex justify-center md:justify-start">
+                        <span class="text-primary-600 font-bold logo-font text-xl">Orjeun</span>
+                    </div>
+                    <div class="mt-8 md:mt-0 flex justify-center">
+                        <p class="text-center text-gray-500 text-sm">
+                            &copy; 2025 Plateforme Orjeun. Tous droits réservés.
+                        </p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex justify-center">
+                        <button id="createAdminBtn" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center">
+                            <i class="ri-user-add-line mr-2"></i> Créer un nouvel admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        
+        <div id="sessionWarning" class="session-warning">
+            <i class="ri-time-warning-line text-secondary-500 text-2xl mr-3"></i>
+            <div>
+                <p class="font-medium text-gray-800">Votre session va expirer</p>
+                <p class="text-sm text-gray-600">Veuillez interagir avec la page pour prolonger votre session</p>
+            </div>
+            <div class="session-timer" id="warningTimer">60</div>
+        </div>
+    </div>
+    
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Créer un nouvel administrateur</h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="ri-close-line text-2xl"></i>
+                </button>
+            </div>
+            
+            <form id="adminForm">
+                <div class="mb-6">
+                    <label for="newAdminName" class="block text-gray-700 font-medium mb-2">Nom complet</label>
+                    <input type="text" id="newAdminName" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Entrez le nom de l'administrateur" required>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="newAdminPassword" class="block text-gray-700 font-medium mb-2">Mot de passe</label>
+                    <div class="relative">
+                        <input type="password" id="newAdminPassword" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Créez un mot de passe" required>
+                        <button type="button" class="absolute right-3 top-3 text-gray-500" id="toggleNewPassword">
+                            <i class="ri-eye-off-line"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center mb-4">
+                    <div id="adminSpinner" class="spinner"></div>
+                </div>
+                
+                <div id="adminMessage" class="admin-message"></div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancelAdmin" class="px-5 py-2.5 text-gray-700 font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition">
+                        Annuler
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition">
+                        Créer l'admin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const passwordInput = document.getElementById('password');
+            const errorMessage = document.getElementById('errorMessage');
+            const passwordSection = document.getElementById('passwordSection');
+            const dashboardSection = document.getElementById('dashboardSection');
+            const togglePassword = document.getElementById('togglePassword');
+            const logoutButton = document.getElementById('logoutButton');
+            const sessionTimer = document.getElementById('sessionTimer');
+            const sessionWarning = document.getElementById('sessionWarning');
+            const warningTimer = document.getElementById('warningTimer');
+            const adminDisplayName = document.getElementById('adminDisplayName');
+            const createAdminBtn = document.getElementById('createAdminBtn');
+            const adminModal = document.getElementById('adminModal');
+            const closeModal = document.getElementById('closeModal');
+            const cancelAdmin = document.getElementById('cancelAdmin');
+            const adminForm = document.getElementById('adminForm');
+            const newAdminName = document.getElementById('newAdminName');
+            const newAdminPassword = document.getElementById('newAdminPassword');
+            const toggleNewPassword = document.getElementById('toggleNewPassword');
+            const adminMessage = document.getElementById('adminMessage');
+            const loginButton = document.getElementById('loginButton');
+            const loginSpinner = document.getElementById('loginSpinner');
+            const adminSpinner = document.getElementById('adminSpinner');
+
+            const adminsRef = database.ref('adm_principal');
+
+            const SESSION_TIMEOUT = 10 * 60 * 1000;
+            const WARNING_TIMEOUT = 60;
+            let sessionTimeout;
+            let warningInterval;
+            
+            function togglePasswordVisibility(input, button) {
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                button.innerHTML = type === 'password' ? '<i class="ri-eye-off-line"></i>' : '<i class="ri-eye-line"></i>';
+            }
+            
+            function showAdminMessage(message, isSuccess = true) {
+                adminMessage.textContent = message;
+                adminMessage.className = 'admin-message';
+                adminMessage.classList.add(isSuccess ? 'success' : 'error');
+                adminMessage.style.display = 'block';
+                
+                setTimeout(() => {
+                    adminMessage.style.display = 'none';
+                }, 5000);
+            }
+            
+            function startSession(adminName) {
+                sessionStorage.setItem('sessionStart', new Date().getTime().toString());
+                sessionStorage.setItem('isAuthenticated', 'true');
+                sessionStorage.setItem('lastActivity', new Date().getTime().toString());
+                sessionStorage.setItem('adminName', adminName);
+                
+                adminDisplayName.textContent = adminName;
+                
+                updateSessionTimer();
+                
+                resetSessionTimeout();
+                
+                document.addEventListener('mousemove', resetSessionTimeout);
+                document.addEventListener('keypress', resetSessionTimeout);
+                document.addEventListener('click', resetSessionTimeout);
+                document.addEventListener('scroll', resetSessionTimeout);
+            }
+            
+            function resetSessionTimeout() {
+                sessionStorage.setItem('lastActivity', new Date().getTime().toString());
+                
+                clearTimeout(sessionTimeout);
+                sessionTimeout = setTimeout(endSession, SESSION_TIMEOUT);
+                
+                hideSessionWarning();
+                
+                updateSessionTimer();
+            }
+            
+            function updateSessionTimer() {
+                const sessionStart = parseInt(sessionStorage.getItem('sessionStart') || new Date().getTime());
+                const elapsed = Math.floor((new Date().getTime() - sessionStart) / 1000);
+                const remaining = Math.floor(SESSION_TIMEOUT / 1000) - elapsed;
+                
+                if (remaining > 0) {
+                    const minutes = Math.floor(remaining / 60);
+                    const seconds = remaining % 60;
+                    sessionTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }
+            
+            function showSessionWarning() {
+                sessionWarning.classList.add('show');
+                
+                let countdown = WARNING_TIMEOUT;
+                warningTimer.textContent = countdown;
+                
+                warningInterval = setInterval(() => {
+                    countdown--;
+                    warningTimer.textContent = countdown;
+                    
+                    if (countdown <= 0) {
+                        clearInterval(warningInterval);
+                        endSession();
+                    }
+                }, 1000);
+            }
+            
+            function hideSessionWarning() {
+                sessionWarning.classList.remove('show');
+                if (warningInterval) {
+                    clearInterval(warningInterval);
+                }
+            }
+            
+            function endSession() {
+                sessionStorage.removeItem('isAuthenticated');
+                sessionStorage.removeItem('sessionStart');
+                sessionStorage.removeItem('lastActivity');
+                sessionStorage.removeItem('adminName');
+                
+                dashboardSection.classList.remove('dashboard-show');
+                
+                setTimeout(() => {
+                    dashboardSection.classList.add('hidden');
+                    
+                    passwordInput.value = '';
+                    passwordInput.type = 'password';
+                    errorMessage.classList.add('hidden');
+                    passwordInput.classList.remove('border-red-500', 'animate-shake');
+                    togglePassword.innerHTML = '<i class="ri-eye-off-line"></i>';
+                    
+                    passwordSection.classList.remove('hidden');
+                    passwordSection.style.opacity = '1';
+                    passwordSection.style.transform = 'translateY(0)';
+                    
+                    document.removeEventListener('mousemove', resetSessionTimeout);
+                    document.removeEventListener('keypress', resetSessionTimeout);
+                    document.removeEventListener('click', resetSessionTimeout);
+                    document.removeEventListener('scroll', resetSessionTimeout);
+                    
+                    alert('Votre session a expiré après 10 minutes d\'inactivité. Veuillez vous reconnecter.');
+                }, 500);
+            }
+            
+            function checkExistingSession() {
+                const isAuthenticated = sessionStorage.getItem('isAuthenticated');
+                const sessionStart = sessionStorage.getItem('sessionStart');
+                const lastActivity = sessionStorage.getItem('lastActivity');
+                const adminName = sessionStorage.getItem('adminName');
+                
+                if (isAuthenticated && sessionStart && lastActivity && adminName) {
+                    const currentTime = new Date().getTime();
+                    const elapsed = currentTime - parseInt(lastActivity);
+                    
+                    if (elapsed < SESSION_TIMEOUT) {
+                        passwordSection.classList.add('hidden');
+                        dashboardSection.classList.remove('hidden');
+                        setTimeout(() => {
+                            dashboardSection.classList.add('dashboard-show');
+                            startSession(adminName);
+                            
+                            setTimeout(showSessionWarning, remaining - (WARNING_TIMEOUT * 1000));
+                        }, 50);
+                        return true;
+                    } else {
+                        sessionStorage.removeItem('isAuthenticated');
+                        sessionStorage.removeItem('sessionStart');
+                        sessionStorage.removeItem('lastActivity');
+                        sessionStorage.removeItem('adminName');
+                    }
+                }
+                return false;
+            }
+            
+            checkExistingSession();
+            
+            togglePassword.addEventListener('click', function() {
+                togglePasswordVisibility(passwordInput, togglePassword);
+            });
+            
+            toggleNewPassword.addEventListener('click', function() {
+                togglePasswordVisibility(newAdminPassword, toggleNewPassword);
+            });
+            
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const password = passwordInput.value;
+                
+                if (!password) {
+                    errorMessage.textContent = 'Veuillez entrer le mot de passe';
+                    errorMessage.classList.remove('hidden');
+                    return;
+                }
+                
+                loginButton.disabled = true;
+                loginSpinner.style.display = 'block';
+                
+                adminsRef.once('value')
+                    .then((snapshot) => {
+                        let adminFound = false;
+                        let adminName = '';
+                        
+                        snapshot.forEach((childSnapshot) => {
+                            const adminData = childSnapshot.val();
+                            if (adminData.password === password) {
+                                adminFound = true;
+                                adminName = childSnapshot.key;
+                                return true;
+                            }
+                        });
+                        
+                        if (adminFound) {
+                            errorMessage.classList.add('hidden');
+                            
+                            passwordSection.style.opacity = '0';
+                            passwordSection.style.transform = 'translateY(-20px)';
+                            
+                            setTimeout(() => {
+                                passwordSection.classList.add('hidden');
+                                
+                                dashboardSection.classList.remove('hidden');
+                                setTimeout(() => {
+                                    dashboardSection.classList.add('dashboard-show');
+                                    
+                                    startSession(adminName);
+                                    
+                                    setTimeout(showSessionWarning, SESSION_TIMEOUT - (WARNING_TIMEOUT * 1000));
+                                }, 50);
+                            }, 500);
+                        } else {
+                            showError('Mot de passe incorrect');
+                        }
+                    })
+                    .catch((error) => {
+                        showError('Erreur de connexion: ' + error.message);
+                    })
+                    .finally(() => {
+                        loginButton.disabled = false;
+                        loginSpinner.style.display = 'none';
+                    });
+                
+                function showError(message) {
+                    errorMessage.textContent = message;
+                    errorMessage.classList.remove('hidden');
+                    passwordInput.classList.add('border-red-500');
+                    
+                    passwordInput.classList.add('animate-shake');
+                    setTimeout(() => {
+                        passwordInput.classList.remove('animate-shake');
+                    }, 500);
+                }
+            });
+            
+            logoutButton.addEventListener('click', function() {
+                endSession();
+            });
+            
+            createAdminBtn.addEventListener('click', function() {
+                adminModal.style.display = 'flex';
+                newAdminName.value = '';
+                newAdminPassword.value = '';
+                adminMessage.style.display = 'none';
+            });
+            
+            closeModal.addEventListener('click', function() {
+                adminModal.style.display = 'none';
+            });
+            
+            cancelAdmin.addEventListener('click', function() {
+                adminModal.style.display = 'none';
+            });
+            
+            adminForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const adminName = newAdminName.value.trim();
+                const password = newAdminPassword.value;
+                
+                if (!adminName || !password) {
+                    showAdminMessage('Veuillez remplir tous les champs', false);
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showAdminMessage('Le mot de passe doit contenir au moins 6 caractères', false);
+                    return;
+                }
+                
+                adminSpinner.style.display = 'block';
+                
+                adminsRef.child(adminName).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            showAdminMessage('Cet administrateur existe déjà', false);
+                        } else {
+                            adminsRef.child(adminName).set({
+                                password: password
+                            })
+                            .then(() => {
+                                showAdminMessage('Administrateur créé avec succès !');
+                                newAdminName.value = '';
+                                newAdminPassword.value = '';
+                                
+                                setTimeout(() => {
+                                    adminModal.style.display = 'none';
+                                }, 2000);
+                            })
+                            .catch((error) => {
+                                showAdminMessage('Erreur lors de la création: ' + error.message, false);
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        showAdminMessage('Erreur: ' + error.message, false);
+                    })
+                    .finally(() => {
+                        adminSpinner.style.display = 'none';
+                    });
+            });
+            
+            setInterval(updateSessionTimer, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestion des Emprunts</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --secondary: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+        
+        .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+        
+        .status-confirmed {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .status-paid {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+        
+        .table-row {
+            transition: background-color 0.2s ease;
+        }
+        
+        .table-row:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .loader {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tab-active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .tab-inactive {
+            color: #6b7280;
+        }
+        
+        .highlight-paid {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .paid-btn {
+            background-color: #000000;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+        }
+        
+        .paid-btn:hover {
+            background-color: #333333;
+        }
+        
+        #confirmPaidModalBtn {
+            background-color: #000000;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+        }
+        
+        #confirmPaidModalBtn:hover {
+            background-color: #333333;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="fixed top-0 w-full bg-white shadow-sm z-50">
+        <div class="flex items-center justify-between px-4 py-3">
+            <div class="flex items-center">
+                <i class="ri-store-line ri-2x text-primary mr-2"></i>
+                <h1 class="text-xl font-bold text-primary">Orjeun Admin</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <i class="ri-user-line text-primary"></i>
+                <span class="text-sm font-medium text-primary">Chef de la Société</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-20 pb-20 px-4 max-w-6xl mx-auto">
+        <div class="mt-4 mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                <i class="ri-bank-card-line mr-3 text-primary"></i>
+                Gestion des Emprunts des Vendeurs
+            </h1>
+            <p class="text-md text-gray-500 mt-2">Surveillez et gérez tous les emprunts des vendeurs</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm p-6 card border border-gray-100">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-full mr-4">
+                        <i class="ri-money-dollar-circle-line ri-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Total emprunts</p>
+                        <h3 class="text-2xl font-bold" id="totalLoans">0 HTG</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm p-6 card border border-gray-100">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-full mr-4">
+                        <i class="ri-check-line ri-2x text-secondary"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Remboursés</p>
+                        <h3 class="text-2xl font-bold" id="paidLoans">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex border-b border-gray-200 mb-6">
+            <button id="activeTab" class="px-4 py-2 font-medium tab-active">Emprunts Actifs</button>
+            <button id="paidTab" class="px-4 py-2 font-medium tab-inactive">Emprunts Remboursés</button>
+        </div>
+
+        <div id="loadingIndicator" class="py-8">
+            <div class="loader"></div>
+            <p class="text-center mt-4 text-gray-500">Chargement des données...</p>
+        </div>
+
+        <div id="activeLoansSection">
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date d'emprunt</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeTableBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="text-center py-8 hidden" id="noActiveMessage">
+                <i class="ri-checkbox-circle-line ri-3x text-green-500 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">Aucun emprunt actif</h3>
+                <p class="text-gray-500">Tous les emprunts ont été remboursés</p>
+            </div>
+        </div>
+
+        <div id="paidLoansSection" class="hidden">
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendeur</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date d'emprunt</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de remboursement</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paidTableBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="text-center py-8 hidden" id="noPaidMessage">
+                <i class="ri-information-line ri-3x text-blue-500 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">Aucun emprunt remboursé</h3>
+                <p class="text-gray-500">Les emprunts remboursés apparaîtront ici</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="paidModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-medium text-gray-900 mb-3">Marquer comme payé</h3>
+            <p class="text-sm text-gray-600 mb-4" id="paidModalMessage">Êtes-vous sûr de vouloir marquer cet emprunt comme payé ?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelPaidModalBtn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm cursor-pointer">Annuler</button>
+                <button id="confirmPaidModalBtn" class="px-4 py-2 text-white rounded-lg text-sm cursor-pointer">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg opacity-0 transition-opacity duration-300 hidden flex items-center">
+        <i class="ri-check-line mr-2"></i>
+        <p id="toastMessage"></p>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+                authDomain: "orjeun-9dec4.firebaseapp.com",
+                databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+                projectId: "orjeun-9dec4",
+                storageBucket: "orjeun-9dec4.appspot.com",
+                messagingSenderId: "979782321937",
+                appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+                measurementId: "G-G316HCYF9E"
+            };
+
+            firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
+
+            initializeApp();
+
+            function initializeApp() {
+                const activeTab = document.getElementById('activeTab');
+                const paidTab = document.getElementById('paidTab');
+                const activeLoansSection = document.getElementById('activeLoansSection');
+                const paidLoansSection = document.getElementById('paidLoansSection');
+                const activeTableBody = document.getElementById('activeTableBody');
+                const paidTableBody = document.getElementById('paidTableBody');
+                const noActiveMessage = document.getElementById('noActiveMessage');
+                const noPaidMessage = document.getElementById('noPaidMessage');
+                const totalLoans = document.getElementById('totalLoans');
+                const paidLoansEl = document.getElementById('paidLoans');
+                const loadingIndicator = document.getElementById('loadingIndicator');
+
+                activeTab.addEventListener('click', () => showTab('active'));
+                paidTab.addEventListener('click', () => showTab('paid'));
+
+                function showTab(tab) {
+                    activeTab.classList.toggle('tab-active', tab === 'active');
+                    activeTab.classList.toggle('tab-inactive', tab !== 'active');
+                    paidTab.classList.toggle('tab-active', tab === 'paid');
+                    paidTab.classList.toggle('tab-inactive', tab !== 'paid');
+                    activeLoansSection.classList.toggle('hidden', tab !== 'active');
+                    paidLoansSection.classList.toggle('hidden', tab !== 'paid');
+                }
+
+                let allLoans = [];
+                let activeLoansList = [];
+                let paidLoansList = [];
+                
+                database.ref('Products_vendeurs').on('value', (snapshot) => {
+                    const productsVendeurs = snapshot.val() || {};
+                    processLoansData(productsVendeurs, 'Products_vendeurs');
+                });
+                
+                database.ref('historique_vendeurs').on('value', (snapshot) => {
+                    const historiqueVendeurs = snapshot.val() || {};
+                    processLoansData(historiqueVendeurs, 'historique_vendeurs');
+                });
+
+                function processLoansData(data, source) {
+                    Object.keys(data).forEach(key => {
+                        const loanData = data[key];
+                        const loan = {
+                            id: key,
+                            source: source,
+                            buyerName: loanData.buyerName || 'Non spécifié',
+                            buyerEmail: loanData.buyerEmail || '',
+                            buyerPhone: loanData.buyerPhone || '',
+                            date: loanData.date || 0,
+                            status: loanData.status || (source === 'Products_vendeurs' ? 'pending' : 'confirmed'),
+                            amount: loanData.amount || (loanData.emprunt ? loanData.emprunt.amount : 0),
+                            productName: loanData.productName || 'Produit sans nom',
+                            productId: loanData.productId || '',
+                            paidDate: loanData.paidDate || null
+                        };
+                        const existingIndex = allLoans.findIndex(l => l.id === key && l.source === source);
+                        if (existingIndex > -1) {
+                            allLoans[existingIndex] = loan;
+                        } else {
+                            allLoans.push(loan);
+                        }
+                    });
+                    activeLoansList = allLoans.filter(loan => loan.status === 'confirmed');
+                    paidLoansList = allLoans.filter(loan => loan.status === 'paid');
+                    updateStats();
+                    renderTables();
+                    loadingIndicator.classList.add('hidden');
+                }
+
+                function updateStats() {
+                    let totalAmount = 0;
+                    let paidAmount = 0;
+                    activeLoansList.forEach(loan => {
+                        if (loan.amount) {
+                            totalAmount += loan.amount;
+                        }
+                    });
+                    paidLoansList.forEach(loan => {
+                        if (loan.amount) {
+                            totalAmount += loan.amount;
+                            paidAmount += loan.amount;
+                        }
+                    });
+                    totalLoans.textContent = totalAmount.toLocaleString('fr-FR') + ' HTG';
+                    paidLoansEl.textContent = paidAmount.toLocaleString('fr-FR') + ' HTG';
+                }
+
+                function renderTables() {
+                    renderActiveTable();
+                    renderPaidTable();
+                }
+
+                function renderActiveTable() {
+                    activeTableBody.innerHTML = '';
+                    if (activeLoansList.length === 0) {
+                        noActiveMessage.classList.remove('hidden');
+                        return;
+                    }
+                    noActiveMessage.classList.add('hidden');
+                    activeLoansList.forEach(loan => {
+                        const row = document.createElement('tr');
+                        row.className = 'table-row';
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium text-gray-900">${loan.buyerName}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${loan.productName}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${loan.buyerEmail}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${loan.buyerPhone}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                ${(loan.amount || 0).toLocaleString('fr-FR')} HTG
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${formatDate(loan.date)}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button class="paid-btn" 
+                                        data-id="${loan.id}" 
+                                        data-source="${loan.source}">
+                                    <i class="ri-money-dollar-circle-line mr-1"></i> Marquer comme payé
+                                </button>
+                            </td>
+                        `;
+                        activeTableBody.appendChild(row);
+                    });
+                }
+
+                function renderPaidTable() {
+                    paidTableBody.innerHTML = '';
+                    if (paidLoansList.length === 0) {
+                        noPaidMessage.classList.remove('hidden');
+                        return;
+                    }
+                    noPaidMessage.classList.add('hidden');
+                    paidLoansList.forEach(loan => {
+                        const paidDate = loan.paidDate ? formatDate(loan.paidDate) : 'Date inconnue';
+                        const row = document.createElement('tr');
+                        row.className = 'table-row highlight-paid';
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium text-gray-900">${loan.buyerName}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${loan.productName}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${loan.buyerEmail}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${loan.buyerPhone}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                ${(loan.amount || 0).toLocaleString('fr-FR')} HTG
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${formatDate(loan.date)}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${paidDate}
+                            </td>
+                        `;
+                        paidTableBody.appendChild(row);
+                    });
+                }
+
+                function formatDate(timestamp) {
+                    if (!timestamp || timestamp < 1000000000000) return 'Date inconnue';
+                    const date = new Date(timestamp);
+                    if (isNaN(date.getTime())) return 'Date invalide';
+                    return date.toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+                
+                document.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('paid-btn')) {
+                        const loanId = e.target.dataset.id;
+                        const source = e.target.dataset.source;
+                        const loan = allLoans.find(l => l.id === loanId && l.source === source);
+                        if (loan) {
+                            showPaidModal('Marquer comme payé', 
+                                `Marquer l'emprunt de ${loan.buyerName} pour ${loan.productName} comme payé ?`, 
+                                () => markLoanAsPaid(loanId, source)
+                            );
+                        }
+                    }
+                });
+                
+                function markLoanAsPaid(loanId, source) {
+                    const paidDate = firebase.database.ServerValue.TIMESTAMP;
+                    if (source === 'Products_vendeurs') {
+                        database.ref(`Products_vendeurs/${loanId}/status`).set('paid')
+                            .then(() => {
+                                database.ref(`Products_vendeurs/${loanId}/paidDate`).set(paidDate)
+                                    .then(() => {
+                                        showToast('Emprunt marqué comme payé');
+                                    });
+                            })
+                            .catch(error => showToast(`Erreur: ${error.message}`));
+                    } else {
+                        database.ref(`historique_vendeurs/${loanId}`).update({
+                            status: 'paid',
+                            paidDate: paidDate
+                        })
+                        .then(() => showToast('Emprunt marqué comme payé'))
+                        .catch(error => showToast(`Erreur: ${error.message}`));
+                    }
+                    database.ref(`Products/${loanId}`).remove()
+                        .then(() => console.log('Table emprunt supprimée pour le produit'))
+                        .catch(error => console.log('Erreur lors de la suppression:', error));
+                }
+                
+                function showPaidModal(title, message, onConfirm) {
+                    const modal = document.getElementById('paidModal');
+                    modal.querySelector('#paidModalMessage').textContent = message;
+                    modal.classList.remove('hidden');
+                    const confirmHandler = () => {
+                        modal.classList.add('hidden');
+                        onConfirm();
+                        document.getElementById('confirmPaidModalBtn').removeEventListener('click', confirmHandler);
+                        document.getElementById('cancelPaidModalBtn').removeEventListener('click', cancelHandler);
+                    };
+                    const cancelHandler = () => {
+                        modal.classList.add('hidden');
+                        document.getElementById('confirmPaidModalBtn').removeEventListener('click', confirmHandler);
+                        document.getElementById('cancelPaidModalBtn').removeEventListener('click', cancelHandler);
+                    };
+                    document.getElementById('confirmPaidModalBtn').addEventListener('click', confirmHandler);
+                    document.getElementById('cancelPaidModalBtn').addEventListener('click', cancelHandler);
+                }
+                
+                window.showToast = (message, duration = 3000) => {
+                    const toast = document.getElementById('toast');
+                    toast.querySelector('#toastMessage').textContent = message;
+                    toast.classList.remove('hidden');
+                    toast.style.opacity = '1';
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        setTimeout(() => toast.classList.add('hidden'), 300);
+                    }, duration);
+                };
+                
+                showTab('active');
+            }
+        });
+    </script>
+</body>
+</html>

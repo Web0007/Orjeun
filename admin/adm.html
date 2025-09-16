@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau de Bord Administrateur</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22c55e',
+          600: '#16a34a',
+          700: '#15803d',
+          800: '#166534',
+          900: '#14532d',
+        },
+        secondary: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        }
+      },
+      borderRadius: {
+        'none': '0px',
+        'sm': '4px',
+        DEFAULT: '8px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
+        '2xl': '24px',
+        '3xl': '32px',
+        'full': '9999px',
+        'button': '8px'
+      }
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f9fafb;
+  background-image: radial-gradient(#e5f5ea 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.nav-item.active {
+  color: #16a34a;
+  border-bottom: 2px solid #fbbf24;
+}
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #22c55e;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.vendor-card {
+  transition: all 0.3s ease;
+  border-left: 4px solid #fbbf24;
+}
+.vendor-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+.stat-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #fffbeb 100%);
+  border: 1px solid #dcfce7;
+}
+.header-gradient {
+  background: linear-gradient(135deg, #3bb54a 0%, #fbbf24 100%);
+}
+.chart-container {
+  min-height: 300px;
+}
+.admin-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.badge-national {
+  background-color: #3b82f6;
+  color: white;
+}
+.badge-departmental {
+  background-color: #10b981;
+  color: white;
+}
+.badge-communal {
+  background-color: #f59e0b;
+  color: white;
+}
+</style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+<div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+  <div class="loader"></div>
+  <p class="ml-4 text-gray-700">Chargement des données...</p>
+</div>
+
+<nav class="fixed top-0 w-full header-gradient shadow-sm z-10">
+<div class="px-4 py-3 flex justify-between items-center">
+  <div class="flex items-center">
+    <span class="text-xl font-['Pacifico'] text-white">AdminDash</span>
+  </div>
+  <a href="../dashboard" class="ml-4 text-gray-600 hover:text-primary transition-colors flex items-center">
+                    <i class="ri-user-line ri-lg mr-1"></i>
+                    <span>Partie Utilisateur</span>
+  <div class="flex items-center space-x-4">
+    <a href="confirm_vendeur" class="p-2 bg-white/20 rounded-full text-white hover:bg-white/30 transition">
+      <i class="ri-user-add-line ri-lg"></i>
+    </a>
+    <div id="admin-info" class="text-right hidden">
+      <p id="admin-name" class="text-sm font-medium text-white"></p>
+      <p id="admin-department" class="text-xs text-white/80"></p>
+    </div>
+    <div class="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full">
+      <i class="ri-user-line ri-lg text-white"></i>
+    </div>
+    <button id="logout-btn" class="text-white text-sm hidden">
+      <i class="ri-logout-circle-r-line"></i> Déconnexion
+    </button>
+  </div>
+</div>
+</nav>
+
+<main class="pt-20 pb-16 px-4">
+<section class="mt-6 mb-8">
+<div class="flex justify-between items-center mb-4">
+  <h2 class="text-lg font-semibold text-gray-700">Aperçu général</h2>
+  <div id="admin-role-badge" class="admin-badge"></div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-primary-100 rounded-full mb-2">
+      <i class="ri-team-line ri-lg text-primary-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Vendeurs</p>
+    <p id="total-vendors" class="text-xl font-semibold">0</p>
+  </div>
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-green-100 rounded-full mb-2">
+      <i class="ri-money-dollar-circle-line ri-lg text-green-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Ventes Totales</p>
+    <p id="total-sales" class="text-xl font-semibold">0 HTG</p>
+  </div>
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-secondary-100 rounded-full mb-2">
+      <i class="ri-percent-line ri-lg text-secondary-600"></i>
+    </div>
+    <p class="text-xs text-gray-500" id="commission-percent">Commission</p>
+    <p id="commission" class="text-xl font-semibold">0 HTG</p>
+  </div>
+  <div class="stat-card p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-full mb-2">
+      <i class="ri-shopping-bag-line ri-lg text-blue-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Produits Vendus</p>
+    <p id="total-products" class="text-xl font-semibold">0</p>
+  </div>
+</div>
+</section>
+
+<div class="bg-white rounded-t shadow-sm mb-4">
+<div class="flex border-b">
+  <button class="nav-item active flex-1 py-3 text-center text-sm font-medium" data-tab="dashboard">
+    <i class="ri-dashboard-line ri-sm mr-1"></i> Tableau de bord
+  </button>
+  <button class="nav-item flex-1 py-3 text-center text-sm font-medium" data-tab="vendors">
+    <i class="ri-user-line ri-sm mr-1"></i> Vendeurs
+  </button>
+</div>
+</div>
+
+<div id="dashboard" class="tab-content active">
+<div class="bg-white p-4 rounded shadow-sm mb-6">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="font-medium text-gray-700">Répartition des performances</h3>
+    <div id="performance-total" class="text-xs text-gray-500">Total: 0 HTG</div>
+  </div>
+  <div id="performance-chart" class="w-full h-64 chart-container"></div>
+  <div class="mt-4 grid grid-cols-2 gap-3 text-xs text-gray-500">
+    <div class="flex items-center">
+      <div class="w-3 h-3 rounded-full bg-[#16a34a] mr-2"></div>
+      <span id="excellent-count">0 vendeurs excellents</span>
+    </div>
+    <div class="flex items-center">
+      <div class="w-3 h-3 rounded-full bg-[#86efac] mr-2"></div>
+      <span id="good-count">0 vendeurs performants</span>
+    </div>
+    <div class="flex items-center">
+      <div class="w-3 h-3 rounded-full bg-[#fde68a] mr-2"></div>
+      <span id="average-count">0 vendeurs moyens</span>
+    </div>
+    <div class="flex items-center">
+      <div class="w-3 h-3 rounded-full bg-[#fcd34d] mr-2"></div>
+      <span id="poor-count">0 vendeurs à améliorer</span>
+    </div>
+  </div>
+  <div class="mt-4 grid grid-cols-1 gap-2 text-xs text-gray-500">
+    <div><strong>Seuils de performance :</strong></div>
+    <div id="excellent-threshold">Excellent : plus de 20 000 HTG</div>
+    <div id="good-threshold">Performant : entre 15 000 et 20 000 HTG</div>
+    <div id="average-threshold">Moyen : entre 10 000 et 15 000 HTG</div>
+    <div id="poor-threshold">À améliorer : moins de 10 000 HTG</div>
+  </div>
+</div>
+
+<div class="bg-white p-4 rounded shadow-sm mb-6">
+  <h3 class="font-medium mb-4 text-gray-700">Top Vendeurs</h3>
+  <div id="top-performers-chart" class="w-full h-64 chart-container"></div>
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+  <div class="bg-white p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-purple-100 rounded-full mb-2">
+      <i class="ri-star-line ri-lg text-purple-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Vendeur du mois</p>
+    <p id="vendor-of-month" class="text-lg font-semibold">-</p>
+    <p id="vendor-sales" class="text-xs text-gray-500">0 HTG</p>
+  </div>
+
+  <div class="bg-white p-4 rounded shadow-sm">
+    <div class="w-8 h-8 flex items-center justify-center bg-yellow-100 rounded-full mb-2">
+      <i class="ri-fire-line ri-lg text-yellow-600"></i>
+    </div>
+    <p class="text-xs text-gray-500">Produit le plus vendu</p>
+    <p id="top-product" class="text-lg font-semibold">-</p>
+    <p id="product-sales" class="text-xs text-gray-500">0 unités</p>
+  </div>
+</div>
+</div>
+
+<div id="vendors" class="tab-content">
+<div class="bg-white p-4 rounded shadow-sm mb-4">
+  <div class="flex items-center mb-4">
+    <div class="flex-1 relative">
+      <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+      <input type="text" id="vendor-search" placeholder="Rechercher un vendeur..." class="w-full pl-10 pr-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+    </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="vendors-grid">
+    <div class="text-center py-8 text-gray-500 col-span-2">
+      <i class="ri-loader-4-line ri-xl animate-spin"></i>
+      <p>Chargement des vendeurs...</p>
+    </div>
+  </div>
+  <div class="flex justify-between items-center mt-4">
+    <p id="vendor-count" class="text-xs text-gray-500">Affichage 0 sur 0 vendeurs</p>
+    <div class="flex space-x-1">
+      <button class="w-8 h-8 flex items-center justify-center rounded border text-gray-500">
+        <i class="ri-arrow-left-s-line"></i>
+      </button>
+      <button class="w-8 h-8 flex items-center justify-center rounded border bg-primary-600 text-white">1</button>
+      <button class="w-8 h-8 flex items-center justify-center rounded border text-gray-500">2</button>
+      <button class="w-8 h-8 flex items-center justify-center rounded border text-gray-500">3</button>
+      <button class="w-8 h-8 flex items-center justify-center rounded border text-gray-500">
+        <i class="ri-arrow-right-s-line"></i>
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+</main>
+
+<nav class="fixed bottom-0 w-full bg-white border-t shadow-sm">
+<div class="grid grid-cols-2 h-14">
+  <button class="flex flex-col items-center justify-center space-y-1 text-primary-600">
+    <i class="ri-dashboard-line ri-lg"></i>
+    <span class="text-xs">Tableau</span>
+  </button>
+  <button class="flex flex-col items-center justify-center space-y-1 text-gray-500">
+    <i class="ri-user-line ri-lg"></i>
+    <span class="text-xs">Vendeurs</span>
+  </button>
+</div>
+</nav>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+  authDomain: "orjeun-9dec4.firebaseapp.com",
+  databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+  projectId: "orjeun-9dec4",
+  storageBucket: "orjeun-9dec4.appspot.com",
+  messagingSenderId: "979782321937",
+  appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+  measurementId: "G-G316HCYF9E"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+let currentAdmin = null;
+let vendors = [];
+let productsData = {};
+let salesData = {};
+let topProduct = { name: "", sales: 0 };
+let profitSettings = {
+  communalPercent: 5,
+  departmentalPercent: 2,
+  nationalPercent: 1,
+  orjeunPercent: 25,
+  vendorPercent: 67
+};
+let performanceThresholds = {
+  excellent: 20000,
+  good: 15000,
+  average: 10000,
+  poor: 0
+};
+
+function normalizeString(str) {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function initApp() {
+  const userEmail = sessionStorage.getItem('userEmail');
+  const userPassword = sessionStorage.getItem('userPassword');
+  
+  if (!userEmail || !userPassword) {
+    showError("Session expirée. Veuillez vous reconnecter.");
+    setTimeout(() => window.location.href = "login", 3000);
+    return;
+  }
+  
+  const usersRef = database.ref('confirmed_adm_member');
+  usersRef.once('value', snapshot => {
+    const users = snapshot.val();
+    
+    if (!users) {
+      showError("Utilisateur non trouvé.");
+      hideLoader();
+      return;
+    }
+    
+    let foundUser = null;
+    Object.keys(users).forEach(key => {
+      const user = users[key];
+      if (normalizeString(user.email) === normalizeString(userEmail) && user.password === userPassword) {
+        foundUser = {
+          id: key,
+          ...user
+        };
+      }
+    });
+    
+    if (!foundUser) {
+      showError("Email ou mot de passe incorrect.");
+      hideLoader();
+      return;
+    }
+    
+    if (foundUser.role !== "responsable") {
+      showError("Accès non autorisé. Rôle insuffisant.");
+      hideLoader();
+      return;
+    }
+    
+    currentAdmin = foundUser;
+    displayAdminInfo();
+    loadProfitSettings();
+  }).catch(error => {
+    console.error("Erreur lors du chargement des utilisateurs:", error);
+    showError("Erreur de chargement des données utilisateurs");
+    hideLoader();
+  });
+}
+
+function loadProfitSettings() {
+  const profitRef = database.ref('profit');
+  profitRef.once('value', snapshot => {
+    const settings = snapshot.val();
+    if (settings) {
+      profitSettings = settings;
+    }
+    loadData();
+  }).catch(error => {
+    console.error("Erreur lors du chargement des paramètres de profit:", error);
+    showError("Erreur de chargement des paramètres de profit");
+    loadData();
+  });
+}
+
+function hideLoader() {
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+function displayAdminInfo() {
+  document.getElementById('admin-info').classList.remove('hidden');
+  document.getElementById('admin-name').textContent = `${currentAdmin.nom} ${currentAdmin.prenom}`;
+  
+  if (currentAdmin.type !== "national") {
+    document.getElementById('admin-department').textContent = `Département: ${currentAdmin.departement}`;
+  } else {
+    document.getElementById('admin-department').textContent = "Administrateur National";
+  }
+  
+  const badge = document.getElementById('admin-role-badge');
+  if (currentAdmin.type === "national") {
+    badge.className = "admin-badge badge-national";
+    badge.textContent = "Administrateur National";
+  } else if (currentAdmin.type === "departemental") {
+    badge.className = "admin-badge badge-departmental";
+    badge.textContent = `Responsable ${currentAdmin.departement}`;
+  } else if (currentAdmin.type === "communal") {
+    badge.className = "admin-badge badge-communal";
+    badge.textContent = `Responsable ${currentAdmin.commune}`;
+  }
+  
+  document.getElementById('logout-btn').classList.remove('hidden');
+}
+
+async function loadData() {
+  try {
+    const vendorsSnapshot = await database.ref('confirmed_adm_member').once('value');
+    const allUsers = vendorsSnapshot.val() || {};
+    vendors = [];
+    
+    Object.keys(allUsers).forEach(key => {
+      const user = allUsers[key];
+      if (user.role === "vendeur") {
+        let shouldInclude = false;
+        const normalizedAdminDepartment = normalizeString(currentAdmin.departement);
+        const normalizedAdminCommune = normalizeString(currentAdmin.commune);
+        const normalizedUserDepartment = normalizeString(user.departement);
+        const normalizedUserCommune = normalizeString(user.commune);
+        
+        if (currentAdmin.type === "national") {
+          shouldInclude = true;
+        } else if (currentAdmin.type === "departemental") {
+          shouldInclude = normalizedAdminDepartment === normalizedUserDepartment;
+        } else if (currentAdmin.type === "communal") {
+          shouldInclude = normalizedAdminCommune === normalizedUserCommune;
+        }
+        
+        if (shouldInclude) {
+          vendors.push({
+            id: key,
+            ...user,
+            totalSales: 0,
+            totalProducts: 0,
+            products: []
+          });
+        }
+      }
+    });
+    
+    document.getElementById('total-vendors').textContent = vendors.length;
+    
+    const productsRef = database.ref('produits');
+    const productsSnapshot = await productsRef.once('value');
+    productsData = productsSnapshot.val() || {};
+    
+    const salesRef = database.ref('historique_produits');
+    const salesSnapshot = await salesRef.once('value');
+    salesData = salesSnapshot.val() || {};
+    
+    const allProducts = {...productsData, ...salesData};
+    
+    let totalSales = 0;
+    let totalProductsSold = 0;
+    let vendorOfMonth = { name: "", sales: 0 };
+    topProduct = { name: "", sales: 0 };
+    
+    const productSales = {};
+    
+    Object.values(allProducts).forEach(product => {
+      const vendorName = product.Non_vendeur || product.Nom_vendeur || product.vendeur || "Inconnu";
+      
+      const vendor = vendors.find(v => {
+        const fullName = `${v.nom} ${v.prenom}`;
+        return normalizeString(fullName) === normalizeString(vendorName) || 
+               normalizeString(v.nom) === normalizeString(vendorName) || 
+               normalizeString(v.prenom) === normalizeString(vendorName);
+      });
+      
+      if (vendor) {
+        const initialQty = parseInt(product.quantity) || 0;
+        const currentQty = parseInt(product.Quantity_actual) || 0;
+        const soldQty = initialQty - currentQty;
+        const price = parseFloat(product.price) || 0;
+        const salesAmount = soldQty * price;
+        
+        vendor.totalSales += salesAmount;
+        vendor.totalProducts += soldQty;
+        vendor.products.push({
+          name: product.name,
+          soldQty,
+          salesAmount
+        });
+        
+        totalSales += salesAmount;
+        totalProductsSold += soldQty;
+        
+        if (vendor.totalSales > vendorOfMonth.sales) {
+          vendorOfMonth = {
+            name: `${vendor.nom} ${vendor.prenom}`,
+            sales: vendor.totalSales
+          };
+        }
+        
+        const productName = product.name;
+        if (productName) {
+          if (!productSales[productName]) {
+            productSales[productName] = 0;
+          }
+          productSales[productName] += soldQty;
+          
+          if (productSales[productName] > topProduct.sales) {
+            topProduct = {
+              name: productName,
+              sales: productSales[productName]
+            };
+          }
+        }
+      }
+    });
+    
+    let commissionPercent = 0;
+    if (currentAdmin.type === "communal") {
+      commissionPercent = profitSettings.communalPercent;
+    } else if (currentAdmin.type === "departemental") {
+      commissionPercent = profitSettings.departmentalPercent;
+    } else if (currentAdmin.type === "national") {
+      commissionPercent = profitSettings.nationalPercent;
+    }
+    
+    const commission = totalSales * (commissionPercent / 100);
+    
+    document.getElementById('commission-percent').textContent = `Commission (${commissionPercent}%)`;
+    document.getElementById('total-sales').textContent = `${totalSales.toLocaleString()} HTG`;
+    document.getElementById('commission').textContent = `${commission.toLocaleString()} HTG`;
+    document.getElementById('total-products').textContent = totalProductsSold.toLocaleString();
+    
+    document.getElementById('vendor-of-month').textContent = vendorOfMonth.name;
+    document.getElementById('vendor-sales').textContent = `${vendorOfMonth.sales.toLocaleString()} HTG`;
+    
+    document.getElementById('top-product').textContent = topProduct.name;
+    document.getElementById('product-sales').textContent = `${topProduct.sales} unités`;
+    
+    calculateStatistics();
+    updateVendorsList();
+    hideLoader();
+  } catch (error) {
+    console.error("Erreur lors du chargement des données:", error);
+    showError("Erreur de chargement des données: " + error.message);
+    hideLoader();
+  }
+}
+
+function calculateStatistics() {
+  let totalSales = 0;
+  
+  const performanceCounts = {
+    excellent: 0,
+    good: 0,
+    average: 0,
+    poor: 0
+  };
+
+  const categorySales = {
+    excellent: 0,
+    good: 0,
+    average: 0,
+    poor: 0
+  };
+  
+  vendors.forEach(vendor => {
+    totalSales += vendor.totalSales;
+    
+    if (vendor.totalSales > performanceThresholds.excellent) {
+      performanceCounts.excellent++;
+      categorySales.excellent += vendor.totalSales;
+    } else if (vendor.totalSales > performanceThresholds.good) {
+      performanceCounts.good++;
+      categorySales.good += vendor.totalSales;
+    } else if (vendor.totalSales > performanceThresholds.average) {
+      performanceCounts.average++;
+      categorySales.average += vendor.totalSales;
+    } else {
+      performanceCounts.poor++;
+      categorySales.poor += vendor.totalSales;
+    }
+  });
+  
+  document.getElementById('excellent-count').textContent = `${performanceCounts.excellent} vendeurs excellents`;
+  document.getElementById('good-count').textContent = `${performanceCounts.good} vendeurs performants`;
+  document.getElementById('average-count').textContent = `${performanceCounts.average} vendeurs moyens`;
+  document.getElementById('poor-count').textContent = `${performanceCounts.poor} vendeurs à améliorer`;
+  document.getElementById('performance-total').textContent = `Total: ${totalSales.toLocaleString()} HTG`;
+  
+  updateCharts(totalSales, performanceCounts, categorySales);
+}
+
+function updateCharts(totalSales, performanceCounts, categorySales) {
+  const performanceChart = echarts.init(document.getElementById('performance-chart'));
+  const performanceOption = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params) {
+        return `${params.name}: ${params.value.toLocaleString()} HTG<br>${performanceCounts[params.data.category]} vendeurs`;
+      }
+    },
+    legend: {
+      show: false
+    },
+    series: [
+      {
+        name: 'Performance des vendeurs',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: true,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: true,
+          formatter: function(params) {
+            const percent = Math.round(params.percent);
+            return `${params.name}\n${params.value.toLocaleString()} HTG\n(${percent}%)`;
+          },
+          fontSize: 12
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        },
+        data: [
+          {
+            value: categorySales.excellent, 
+            name: 'Excellent', 
+            category: 'excellent',
+            itemStyle: {color: '#16a34a'}
+          },
+          {
+            value: categorySales.good, 
+            name: 'Performant', 
+            category: 'good',
+            itemStyle: {color: '#86efac'}
+          },
+          {
+            value: categorySales.average, 
+            name: 'Moyen', 
+            category: 'average',
+            itemStyle: {color: '#fde68a'}
+          },
+          {
+            value: categorySales.poor, 
+            name: 'À améliorer', 
+            category: 'poor',
+            itemStyle: {color: '#fcd34d'}
+          }
+        ]
+      }
+    ]
+  };
+  performanceChart.setOption(performanceOption);
+  
+  const topVendors = [...vendors]
+    .sort((a, b) => b.totalSales - a.totalSales)
+    .slice(0, 5);
+  
+  const topPerformersChart = echarts.init(document.getElementById('top-performers-chart'));
+  const topPerformersOption = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} HTG'
+    },
+    grid: {
+      top: '5%',
+      left: '3%',
+      right: '15%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      axisLabel: {
+        formatter: '{value} HTG'
+      }
+    },
+    yAxis: {
+      type: 'category',
+      data: topVendors.map(vendor => `${vendor.nom} ${vendor.prenom}`),
+      axisLabel: {
+        fontSize: 12
+      }
+    },
+    series: [
+      {
+        type: 'bar',
+        data: topVendors.map(vendor => ({
+          value: vendor.totalSales,
+          itemStyle: {color: getRandomColor()}
+        })),
+        label: {
+          show: true,
+          position: 'right',
+          formatter: '{c} HTG'
+        },
+        barWidth: '60%'
+      }
+    ]
+  };
+  topPerformersChart.setOption(topPerformersOption);
+  
+  window.addEventListener('resize', function() {
+    performanceChart.resize();
+    topPerformersChart.resize();
+  });
+}
+
+function updateVendorsList() {
+  const vendorsGrid = document.getElementById('vendors-grid');
+  vendorsGrid.innerHTML = '';
+  
+  vendors.forEach(vendor => {
+    const vendorCard = document.createElement('div');
+    vendorCard.className = 'vendor-card bg-white p-4 rounded shadow-sm flex flex-col';
+    vendorCard.innerHTML = `
+      <div class="flex items-center mb-3">
+        <div class="w-10 h-10 flex items-center justify-center bg-primary-100 rounded-full mr-3">
+          <span class="text-sm font-medium text-primary-600">${(vendor.nom || '')[0]}${(vendor.prenom || '')[0]}</span>
+        </div>
+        <div>
+          <h3 class="font-medium">${vendor.nom || 'Inconnu'} ${vendor.prenom || ''}</h3>
+          <p class="text-xs text-gray-500">${vendor.email}</p>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-3 mt-auto">
+        <div class="bg-gray-50 p-2 rounded text-center">
+          <p class="text-xs text-gray-500">Ventes</p>
+          <p class="font-semibold">${vendor.totalSales.toLocaleString()} HTG</p>
+        </div>
+        <div class="bg-gray-50 p-2 rounded text-center">
+          <p class="text-xs text-gray-500">Produits</p>
+          <p class="font-semibold">${vendor.totalProducts || 0}</p>
+        </div>
+      </div>
+      
+      <div class="mt-3 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Commune:</span>
+          <span>${vendor.commune || 'N/A'}</span>
+        </div>
+        <div class="flex justify-between mt-1">
+          <span class="text-gray-500">Département:</span>
+          <span>${vendor.departement || 'N/A'}</span>
+        </div>
+      </div>
+    `;
+    vendorsGrid.appendChild(vendorCard);
+  });
+  
+  document.getElementById('vendor-count').textContent = `Affichage ${vendors.length} sur ${vendors.length} vendeurs`;
+}
+
+function getRandomColor() {
+  const colors = ['#16a34a', '#86efac', '#fde68a', '#fcd34d', '#fbbf24', '#f59e0b'];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+function showError(message) {
+  const errorMessage = document.createElement('div');
+  errorMessage.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
+  errorMessage.innerHTML = `
+    <div class="flex items-center">
+      <i class="ri-error-warning-line mr-2"></i>
+      <span>${message}</span>
+    </div>
+  `;
+  document.body.appendChild(errorMessage);
+  
+  setTimeout(() => {
+    errorMessage.remove();
+  }, 5000);
+}
+
+function setupTabNavigation() {
+  const navItems = document.querySelectorAll('.nav-item');
+  const tabContents = document.querySelectorAll('.tab-content');
+  
+  navItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const tabId = this.getAttribute('data-tab');
+      
+      navItems.forEach(navItem => navItem.classList.remove('active'));
+      this.classList.add('active');
+      
+      tabContents.forEach(content => {
+        if (content.id === tabId) {
+          content.classList.add('active');
+        } else {
+          content.classList.remove('active');
+        }
+      });
+    });
+  });
+  
+  const bottomTabs = document.querySelectorAll('.fixed.bottom-0 button');
+  bottomTabs.forEach((tab, index) => {
+    tab.addEventListener('click', function() {
+      bottomTabs.forEach(t => {
+        t.classList.remove('text-primary-600');
+        t.classList.add('text-gray-500');
+      });
+      this.classList.remove('text-gray-500');
+      this.classList.add('text-primary-600');
+      
+      if (navItems[index]) {
+        navItems[index].click();
+      }
+    });
+  });
+}
+
+function setupLogout() {
+  document.getElementById('logout-btn').addEventListener('click', function() {
+    sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem('userPassword');
+    window.location.href = 'login';
+  });
+}
+
+function setupVendorSearch() {
+  const searchInput = document.getElementById('vendor-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const vendorsGrid = document.getElementById('vendors-grid');
+      
+      vendorsGrid.innerHTML = '';
+      
+      const filteredVendors = vendors.filter(vendor => {
+        const fullName = `${vendor.nom || ''} ${vendor.prenom || ''}`.toLowerCase();
+        const email = (vendor.email || '').toLowerCase();
+        const commune = (vendor.commune || '').toLowerCase();
+        const departement = (vendor.departement || '').toLowerCase();
+        
+        return fullName.includes(searchTerm) || 
+               email.includes(searchTerm) || 
+               commune.includes(searchTerm) ||
+               departement.includes(searchTerm);
+      });
+      
+      if (filteredVendors.length === 0) {
+        vendorsGrid.innerHTML = `
+          <div class="col-span-2 text-center py-8 text-gray-500">
+            <i class="ri-search-line ri-xl"></i>
+            <p>Aucun vendeur trouvé</p>
+          </div>
+        `;
+        return;
+      }
+      
+      filteredVendors.forEach(vendor => {
+        const vendorCard = document.createElement('div');
+        vendorCard.className = 'vendor-card bg-white p-4 rounded shadow-sm flex flex-col';
+        vendorCard.innerHTML = `
+          <div class="flex items-center mb-3">
+            <div class="w-10 h-10 flex items-center justify-center bg-primary-100 rounded-full mr-3">
+              <span class="text-sm font-medium text-primary-600">${(vendor.nom || '')[0]}${(vendor.prenom || '')[0]}</span>
+            </div>
+            <div>
+              <h3 class="font-medium">${vendor.nom || 'Inconnu'} ${vendor.prenom || ''}</h3>
+              <p class="text-xs text-gray-500">${vendor.email}</p>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3 mt-auto">
+            <div class="bg-gray-50 p-2 rounded text-center">
+              <p class="text-xs text-gray-500">Ventes</p>
+              <p class="font-semibold">${vendor.totalSales.toLocaleString()} HTG</p>
+            </div>
+            <div class="bg-gray-50 p-2 rounded text-center">
+              <p class="text-xs text-gray-500">Produits</p>
+              <p class="font-semibold">${vendor.totalProducts || 0}</p>
+            </div>
+          </div>
+          
+          <div class="mt-3 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Commune:</span>
+              <span>${vendor.commune || 'N/A'}</span>
+            </div>
+            <div class="flex justify-between mt-1">
+              <span class="text-gray-500">Département:</span>
+              <span>${vendor.departement || 'N/A'}</span>
+            </div>
+          </div>
+        `;
+        vendorsGrid.appendChild(vendorCard);
+      });
+      
+      const visibleCount = filteredVendors.length;
+      document.getElementById('vendor-count').textContent = `Affichage ${visibleCount} sur ${vendors.length} vendeurs`;
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  setupTabNavigation();
+  initApp();
+  setupLogout();
+  setupVendorSearch();
+});
+</script>
+</body>
+</html>

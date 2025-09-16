@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum Administrateurs - Orjeun</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+        .upload-container {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .upload-container:hover {
+            border-color: #4F46E5;
+            background: #f0f4ff;
+        }
+        .block-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .content-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 1rem;
+        }
+        .content-text {
+            white-space: pre-wrap;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .publication-card {
+            transition: transform 0.2s;
+        }
+        .publication-card:hover {
+            transform: translateY(-3px);
+        }
+        .ri-close-circle-line {
+            cursor: pointer;
+            color: #ef4444;
+        }
+        .ri-close-circle-line:hover {
+            color: #dc2626;
+        }
+        .block-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .btn-save-block {
+            background-color: #4F46E5;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn-edit-block {
+            background-color: #e5e7eb;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .publication-date {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="fixed top-0 w-full bg-white shadow-sm z-50">
+        <div class="flex items-center justify-between px-4 py-3">
+            <div class="flex items-center">
+                <h1 class="text-xl font-['Pacifico'] text-primary">Orjeun</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="userNameNav" class="text-sm font-medium text-primary"></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-16 pb-20 px-4">
+        <div class="mt-4 mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800">Forum Administrateurs</h1>
+            <p class="text-sm text-gray-500">Créez des publications pour partager les activités du site</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <h2 class="text-lg font-medium text-gray-800 mb-4">Nouvelle Publication</h2>
+            
+            <form id="publicationForm">
+                <div class="mb-4">
+                    <label for="publicationTitle" class="block text-sm font-medium text-gray-700 mb-1">Titre de la publication</label>
+                    <input type="text" id="publicationTitle" class="w-full px-3 py-2 border border-gray-300 rounded-button text-sm" placeholder="Ex: Nouvelle fonctionnalité disponible" required>
+                </div>
+                
+                <div id="contentBlocks" class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Contenu de la publication</h3>
+                </div>
+                
+                <div class="mb-4">
+                    <button type="button" id="addBlockBtn" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-button flex items-center justify-center w-full cursor-pointer">
+                        <i class="ri-add-line ri-lg mr-2"></i>
+                        <span>Ajouter un bloc de contenu</span>
+                    </button>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" id="cancelPublicationBtn" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-button text-sm cursor-pointer">Annuler</button>
+                    <button type="submit" id="savePublicationBtn" class="flex-1 px-4 py-2 bg-primary text-white rounded-button text-sm cursor-pointer">Publier</button>
+                </div>
+            </form>
+        </div>
+
+        <div>
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-medium text-gray-800">Historique des Publications</h2>
+                <div class="text-sm text-gray-500" id="publicationsCount">Chargement...</div>
+            </div>
+            <div id="existingPublications" class="space-y-4">
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg opacity-0 transition-opacity duration-300 hidden">
+        <p id="toastMessage"></p>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const UPLOADCARE_PUB_KEY = 'ffd4bffb1936c80f5abd';
+            let contentBlocks = [];
+            let currentUserName = '';
+            
+            const firebaseConfig = {
+                apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+                authDomain: "orjeun-9dec4.firebaseapp.com",
+                databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+                projectId: "orjeun-9dec4",
+                storageBucket: "orjeun-9dec4.appspot.com",
+                messagingSenderId: "979782321937",
+                appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+                measurementId: "G-G316HCYF9E"
+            };
+
+            firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
+
+            currentUserName = sessionStorage.getItem('userName') || "Administrateur";
+            document.getElementById('userNameNav').textContent = currentUserName;
+
+            initializeForum();
+
+            function initializeForum() {
+                const addBlockBtn = document.getElementById('addBlockBtn');
+                const contentBlocksContainer = document.getElementById('contentBlocks');
+                const publicationForm = document.getElementById('publicationForm');
+                const cancelPublicationBtn = document.getElementById('cancelPublicationBtn');
+                const savePublicationBtn = document.getElementById('savePublicationBtn');
+                
+                addBlockBtn.addEventListener('click', addContentBlock);
+                cancelPublicationBtn.addEventListener('click', resetPublicationForm);
+                
+                publicationForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const title = document.getElementById('publicationTitle').value.trim();
+                    
+                    if (!title) {
+                        showToast("Veuillez saisir un titre pour la publication");
+                        return;
+                    }
+                    
+                    if (contentBlocks.length === 0) {
+                        showToast("Veuillez ajouter au moins un bloc de contenu");
+                        return;
+                    }
+                    
+                    const blockElements = document.querySelectorAll('.block-card');
+                    let hasErrors = false;
+                    
+                    blockElements.forEach(blockElement => {
+                        const blockId = blockElement.id.replace('block-', '');
+                        const blockType = blockElement.getAttribute('data-type');
+                        
+                        const blockData = contentBlocks.find(block => block.id == blockId);
+                        
+                        if (!blockData) {
+                            const saveResult = saveBlockFromForm(blockId, blockType, blockElement);
+                            if (!saveResult) {
+                                showToast("Veuillez compléter tous les blocs de contenu");
+                                hasErrors = true;
+                            }
+                        }
+                    });
+                    
+                    if (hasErrors) {
+                        return;
+                    }
+                    
+                    try {
+                        savePublicationBtn.disabled = true;
+                        savePublicationBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i> Publication...';
+                        
+                        const publicationData = {
+                            title: title,
+                            content: contentBlocks,
+                            author: currentUserName,
+                            createdAt: firebase.database.ServerValue.TIMESTAMP
+                        };
+                        
+                        const newPublicationRef = database.ref('Forum').push();
+                        await newPublicationRef.set(publicationData);
+                        
+                        showToast('Publication enregistrée avec succès !');
+                        resetPublicationForm();
+                        loadPublications();
+                        
+                    } catch (error) {
+                        console.error('Erreur:', error);
+                        showToast(`Échec de la publication: ${error.message}`);
+                    } finally {
+                        savePublicationBtn.disabled = false;
+                        savePublicationBtn.innerHTML = 'Publier';
+                    }
+                });
+                
+                loadPublications();
+            }
+            
+            function addContentBlock() {
+                const blockId = Date.now();
+                const blockCard = document.createElement('div');
+                blockCard.className = 'block-card';
+                blockCard.id = `block-${blockId}`;
+                blockCard.setAttribute('data-type', '');
+                blockCard.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-medium text-gray-700">Nouveau bloc de contenu</h3>
+                        <button type="button" class="delete-block-btn text-red-600">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Type de contenu</label>
+                        <select class="block-type-selector w-full px-3 py-2 border border-gray-300 rounded-button text-sm" required>
+                            <option value="">Choisir un type</option>
+                            <option value="text">Texte</option>
+                            <option value="image">Image</option>
+                            <option value="link">Lien</option>
+                        </select>
+                    </div>
+                    
+                    <div class="block-content-form"></div>
+                    <div class="block-content-preview hidden"></div>
+                `;
+                
+                document.getElementById('contentBlocks').appendChild(blockCard);
+                
+                const typeSelector = blockCard.querySelector('.block-type-selector');
+                typeSelector.addEventListener('change', function() {
+                    const blockType = this.value;
+                    blockCard.setAttribute('data-type', blockType);
+                    
+                    const contentForm = blockCard.querySelector('.block-content-form');
+                    const contentPreview = blockCard.querySelector('.block-content-preview');
+                    
+                    contentForm.innerHTML = '';
+                    contentPreview.innerHTML = '';
+                    contentPreview.classList.add('hidden');
+                    
+                    if (blockType === 'text') {
+                        contentForm.innerHTML = `
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Contenu texte</label>
+                                <textarea rows="4" class="text-content-input w-full px-3 py-2 border border-gray-300 rounded-button text-sm" placeholder="Saisissez votre texte ici..." required></textarea>
+                            </div>
+                            <div class="block-actions">
+                                <button type="button" class="save-block-btn btn-save-block">Enregistrer</button>
+                            </div>
+                        `;
+                        
+                        const saveBtn = contentForm.querySelector('.save-block-btn');
+                        saveBtn.addEventListener('click', function() {
+                            const textInput = contentForm.querySelector('.text-content-input');
+                            const textContent = textInput.value.trim();
+                            
+                            if (!textContent) {
+                                showToast("Veuillez saisir du texte");
+                                return;
+                            }
+                            
+                            contentPreview.innerHTML = `
+                                <div class="content-text">${textContent}</div>
+                                <div class="block-actions">
+                                    <button type="button" class="edit-block-btn btn-edit-block">Modifier</button>
+                                </div>
+                            `;
+                            contentPreview.classList.remove('hidden');
+                            contentForm.classList.add('hidden');
+                            
+                            saveBlockContent(blockId, {
+                                type: 'text',
+                                content: textContent
+                            });
+                            
+                            const editBtn = contentPreview.querySelector('.edit-block-btn');
+                            editBtn.addEventListener('click', function() {
+                                contentPreview.classList.add('hidden');
+                                contentForm.classList.remove('hidden');
+                            });
+                        });
+                        
+                    } else if (blockType === 'image') {
+                        contentForm.innerHTML = `
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                                <div class="upload-container" onclick="document.getElementById('fileInput-${blockId}').click()">
+                                    <i class="ri-image-line text-4xl text-primary mb-2"></i>
+                                    <p class="font-medium">Cliquer pour sélectionner une image</p>
+                                    <p class="text-sm text-gray-500 mt-1">JPG/PNG - Max 5MB</p>
+                                </div>
+                                <input type="file" id="fileInput-${blockId}" accept="image/*" hidden>
+                                <div id="uploadStatus-${blockId}" class="hidden mt-4 text-center text-sm text-gray-500">
+                                    <i class="ri-loader-4-line animate-spin mr-2"></i>Téléchargement en cours...
+                                </div>
+                                <img id="imagePreview-${blockId}" class="hidden mx-auto content-preview rounded-lg mt-4" alt="Aperçu de l'image">
+                            </div>
+                        `;
+                        
+                        const fileInput = document.getElementById(`fileInput-${blockId}`);
+                        fileInput.addEventListener('change', async function(e) {
+                            const file = e.target.files[0];
+                            if (!file) return;
+
+                            if (file.size > 5 * 1024 * 1024) {
+                                showToast("Le fichier est trop volumineux (max 5MB)");
+                                return;
+                            }
+
+                            const uploadStatus = document.getElementById(`uploadStatus-${blockId}`);
+                            const imagePreview = document.getElementById(`imagePreview-${blockId}`);
+                            
+                            uploadStatus.classList.remove('hidden');
+                            imagePreview.classList.add('hidden');
+
+                            try {
+                                const formData = new FormData();
+                                formData.append('UPLOADCARE_PUB_KEY', UPLOADCARE_PUB_KEY);
+                                formData.append('file', file);
+
+                                const response = await fetch('https://upload.uploadcare.com/base/', {
+                                    method: 'POST',
+                                    body: formData
+                                });
+
+                                const data = await response.json();
+                                
+                                if (data.file) {
+                                    const imageUrl = `https://ucarecdn.com/${data.file}/`;
+                                    imagePreview.src = imageUrl;
+                                    imagePreview.classList.remove('hidden');
+                                    
+                                    const contentPreview = blockCard.querySelector('.block-content-preview');
+                                    contentPreview.innerHTML = `
+                                        <img src="${imageUrl}" alt="Image de la publication" class="content-preview">
+                                        <div class="block-actions">
+                                            <button type="button" class="edit-block-btn btn-edit-block">Modifier</button>
+                                        </div>
+                                    `;
+                                    contentPreview.classList.remove('hidden');
+                                    contentForm.classList.add('hidden');
+                                    
+                                    saveBlockContent(blockId, {
+                                        type: 'image',
+                                        content: imageUrl
+                                    });
+                                    
+                                    const editBtn = contentPreview.querySelector('.edit-block-btn');
+                                    editBtn.addEventListener('click', function() {
+                                        contentPreview.classList.add('hidden');
+                                        contentForm.classList.remove('hidden');
+                                    });
+                                    
+                                } else {
+                                    throw new Error('Réponse API invalide');
+                                }
+
+                            } catch (error) {
+                                console.error("Erreur d'upload:", error);
+                                showToast("Échec de l'upload de l'image");
+                            } finally {
+                                uploadStatus.classList.add('hidden');
+                            }
+                        });
+                        
+                    } else if (blockType === 'link') {
+                        contentForm.innerHTML = `
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">URL du lien</label>
+                                <input type="url" class="link-url-input w-full px-3 py-2 border border-gray-300 rounded-button text-sm" placeholder="https://exemple.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Texte du lien (optionnel)</label>
+                                <input type="text" class="link-text-input w-full px-3 py-2 border border-gray-300 rounded-button text-sm" placeholder="Ex: Visiter notre site">
+                            </div>
+                            <div class="block-actions">
+                                <button type="button" class="save-block-btn btn-save-block">Enregistrer</button>
+                            </div>
+                        `;
+                        
+                        const saveBtn = contentForm.querySelector('.save-block-btn');
+                        saveBtn.addEventListener('click', function() {
+                            const urlInput = contentForm.querySelector('.link-url-input');
+                            const textInput = contentForm.querySelector('.link-text-input');
+                            
+                            const url = urlInput.value.trim();
+                            const text = textInput.value.trim() || url;
+                            
+                            if (!url) {
+                                showToast("Veuillez saisir une URL valide");
+                                return;
+                            }
+                            
+                            const contentPreview = blockCard.querySelector('.block-content-preview');
+                            contentPreview.innerHTML = `
+                                <div class="flex items-center">
+                                    <i class="ri-links-line text-xl text-primary mr-2"></i>
+                                    <a href="${url}" target="_blank" class="text-primary hover:underline">${text}</a>
+                                </div>
+                                <div class="block-actions">
+                                    <button type="button" class="edit-block-btn btn-edit-block">Modifier</button>
+                                </div>
+                            `;
+                            contentPreview.classList.remove('hidden');
+                            contentForm.classList.add('hidden');
+                            
+                            const editBtn = contentPreview.querySelector('.edit-block-btn');
+                            editBtn.addEventListener('click', function() {
+                                contentPreview.classList.add('hidden');
+                                contentForm.classList.remove('hidden');
+                            });
+                            
+                            saveBlockContent(blockId, {
+                                type: 'link',
+                                url: url,
+                                text: text
+                            });
+                        });
+                    }
+                });
+                
+                const deleteBtn = blockCard.querySelector('.delete-block-btn');
+                deleteBtn.addEventListener('click', function() {
+                    blockCard.remove();
+                    contentBlocks = contentBlocks.filter(block => block.id !== blockId);
+                });
+            }
+            
+            function saveBlockContent(blockId, content) {
+                contentBlocks = contentBlocks.filter(block => block.id !== blockId);
+                
+                contentBlocks.push({
+                    id: blockId,
+                    ...content
+                });
+            }
+            
+            function saveBlockFromForm(blockId, blockType, blockElement) {
+                if (!blockType) {
+                    showToast("Veuillez choisir un type pour le bloc");
+                    return false;
+                }
+                
+                if (blockType === 'text') {
+                    const textarea = blockElement.querySelector('.text-content-input');
+                    if (!textarea) {
+                        showToast("Veuillez saisir du texte pour le bloc");
+                        return false;
+                    }
+                    
+                    const textContent = textarea.value.trim();
+                    if (!textContent) {
+                        showToast("Veuillez saisir du texte pour le bloc");
+                        return false;
+                    }
+                    
+                    saveBlockContent(blockId, {
+                        type: 'text',
+                        content: textContent
+                    });
+                    return true;
+                    
+                } else if (blockType === 'image') {
+                    const imgPreview = blockElement.querySelector('.block-content-preview img');
+                    if (!imgPreview || !imgPreview.src) {
+                        showToast("Veuillez télécharger une image pour le bloc");
+                        return false;
+                    }
+                    
+                    saveBlockContent(blockId, {
+                        type: 'image',
+                        content: imgPreview.src
+                    });
+                    return true;
+                    
+                } else if (blockType === 'link') {
+                    const urlInput = blockElement.querySelector('.link-url-input');
+                    if (!urlInput) {
+                        showToast("Veuillez saisir une URL pour le bloc");
+                        return false;
+                    }
+                    
+                    const url = urlInput.value.trim();
+                    if (!url) {
+                        showToast("Veuillez saisir une URL valide");
+                        return false;
+                    }
+                    
+                    const textInput = blockElement.querySelector('.link-text-input');
+                    const text = textInput ? textInput.value.trim() : url;
+                    
+                    saveBlockContent(blockId, {
+                        type: 'link',
+                        url: url,
+                        text: text
+                    });
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            function resetPublicationForm() {
+                document.getElementById('publicationTitle').value = '';
+                document.getElementById('contentBlocks').innerHTML = '';
+                contentBlocks = [];
+            }
+            
+            function loadPublications() {
+                database.ref('Forum').orderByChild('createdAt').once('value').then(snapshot => {
+                    const publications = snapshot.val() || {};
+                    const container = document.getElementById('existingPublications');
+                    const countElement = document.getElementById('publicationsCount');
+                    
+                    container.innerHTML = '';
+                    
+                    const pubList = [];
+                    snapshot.forEach(childSnapshot => {
+                        pubList.push({
+                            key: childSnapshot.key,
+                            ...childSnapshot.val()
+                        });
+                    });
+                    
+                    pubList.sort((a, b) => b.createdAt - a.createdAt);
+                    
+                    countElement.textContent = `${pubList.length} publication(s)`;
+                    
+                    pubList.forEach(publication => {
+                        const pubDate = new Date(publication.createdAt);
+                        const dateStr = pubDate.toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        let contentHTML = '';
+                        publication.content.forEach(block => {
+                            if (block.type === 'text') {
+                                contentHTML += `<div class="content-text mb-3">${block.content}</div>`;
+                            } else if (block.type === 'image') {
+                                contentHTML += `<img src="${block.content}" alt="Image de la publication" class="content-preview mb-3">`;
+                            } else if (block.type === 'link') {
+                                contentHTML += `
+                                    <div class="flex items-center mb-3">
+                                        <i class="ri-links-line text-xl text-primary mr-2"></i>
+                                        <a href="${block.url}" target="_blank" class="text-primary hover:underline">${block.text}</a>
+                                    </div>
+                                `;
+                            }
+                        });
+                        
+                        container.innerHTML += `
+                            <div class="bg-white rounded-lg shadow-sm p-4 publication-card">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h3 class="text-lg font-semibold text-gray-800">${publication.title}</h3>
+                                    <button class="delete-publication-btn text-red-600" data-id="${publication.key}">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </div>
+                                <div class="text-sm text-gray-500 mb-3">
+                                    <span>Par ${publication.author}</span>
+                                    <span class="mx-2">•</span>
+                                    <span class="publication-date">${dateStr}</span>
+                                </div>
+                                <div class="publication-content">
+                                    ${contentHTML}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    document.querySelectorAll('.delete-publication-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const pubId = this.getAttribute('data-id');
+                            deletePublication(pubId);
+                        });
+                    });
+                    
+                    if (pubList.length === 0) {
+                        container.innerHTML = `
+                            <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+                                <i class="ri-newspaper-line text-4xl text-gray-300 mb-4"></i>
+                                <p class="text-gray-500">Aucune publication disponible</p>
+                                <p class="text-sm text-gray-400 mt-2">Créez votre première publication !</p>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            function deletePublication(pubId) {
+                if (confirm("Êtes-vous sûr de vouloir supprimer cette publication ?")) {
+                    database.ref(`Forum/${pubId}`).remove()
+                        .then(() => {
+                            showToast("Publication supprimée avec succès");
+                            loadPublications();
+                        })
+                        .catch(error => {
+                            console.error("Erreur de suppression:", error);
+                            showToast("Échec de la suppression");
+                        });
+                }
+            }
+            
+            window.showToast = (message, duration = 3000) => {
+                const toast = document.getElementById('toast');
+                toast.querySelector('#toastMessage').textContent = message;
+                toast.classList.remove('hidden');
+                toast.style.opacity = '1';
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.classList.add('hidden'), 300);
+                }, duration);
+            };
+        });
+    </script>
+</body>
+</html>

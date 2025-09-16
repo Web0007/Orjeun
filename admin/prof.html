@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">    
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistiques des Formations - FormaPro</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#10B981',
+        secondary: '#8B5CF6', 
+        tertiary: '#0EA5E9'
+      },
+      borderRadius: {
+        'none': '0px',
+        'sm': '4px',
+        DEFAULT: '8px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
+        '2xl': '24px',
+        '3xl': '32px',
+        'full': '9999px',
+        'button': '8px'
+      }
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9fafb;
+}
+.nav-link {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+.nav-link:hover {
+  background-color: #f1f5f9;
+}
+.nav-link.active {
+  background-color: #10B981;
+  color: white;
+}
+.notification {
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+.notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+.card-stat {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.card-stat:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+.stat-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+.stat-title {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+.chart-container {
+  height: 300px;
+}
+.page-section {
+  display: none;
+}
+.page-section.active {
+  display: block;
+}
+.progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #e5e7eb;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(16, 185, 129, 0.3);
+  border-radius: 50%;
+  border-top-color: #10B981;
+  animation: spin 1s ease-in-out infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.edit-block-container {
+  background-color: #f9fafb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 15px;
+  border: 1px solid #e5e7eb;
+}
+.block-card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+.block-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.btn-move {
+  background-color: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.btn-save-block {
+  background-color: #10B981;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.content-text {
+  white-space: pre-wrap;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+.quiz-preview-option {
+  padding: 8px;
+  margin-top: 5px;
+  border-left: 3px solid #e5e7eb;
+  border-radius: 4px;
+}
+.quiz-preview-option.correct {
+  background-color: #dcfce7;
+  border-left: 3px solid #22c55e;
+}
+
+/* Styles pour le menu responsive */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #4b5563;
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  left: -300px; /* Changé de right à left */
+  width: 280px;
+  height: 100vh;
+  background-color: white;
+  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1); /* Ombre à droite */
+  z-index: 100;
+  transition: left 0.3s ease; /* Transition sur left */
+  padding-top: 60px;
+  overflow-y: auto;
+}
+
+.mobile-menu.active {
+  left: 0; /* Menu visible */
+}
+
+.mobile-menu-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
+.mobile-menu-overlay.active {
+  display: block;
+}
+
+.mobile-menu-content {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.mobile-nav-link {
+  display: block;
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+  color: #1f2937;
+}
+
+.mobile-nav-link:hover {
+  background-color: #f1f5f9;
+}
+
+.mobile-nav-link.active {
+  background-color: #10B981;
+  color: white;
+}
+
+.mobile-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #4b5563;
+}
+
+@media (max-width: 768px) {
+  .card-stat {
+    margin-bottom: 1rem;
+  }
+  .grid-cols-1 {
+    grid-template-columns: 1fr;
+  }
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  .grid-cols-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .flex-col-reverse {
+    flex-direction: column-reverse;
+  }
+  .hidden-mobile {
+    display: none;
+  }
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  table {
+    min-width: 600px;
+  }
+  
+  /* Afficher le bouton menu sur mobile */
+  .mobile-menu-btn {
+    display: block;
+    order: -1; /* Positionne le bouton en premier */
+    margin-right: 10px;
+  }
+  
+  /* Cacher les liens de navigation sur mobile */
+  .desktop-nav-links {
+    display: none;
+  }
+  
+  /* Ajustement du logo pour mobile */
+  .nav-logo {
+    margin-left: 0;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none;
+  }
+  
+  .desktop-nav-links {
+    display: flex;
+  }
+}
+</style>
+</head>
+<body class="min-h-screen pt-16 pb-24">
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- Menu mobile -->
+<div id="mobileMenuOverlay" class="mobile-menu-overlay"></div>
+<div id="mobileMenu" class="mobile-menu">
+  <button id="mobileMenuClose" class="mobile-close-btn">
+    <i class="ri-close-line"></i>
+  </button>
+  <div class="mobile-menu-content">
+    <a href="#" class="mobile-nav-link" data-page="creer">Créer</a>
+    <a href="#" class="mobile-nav-link active" data-page="stat">Statistiques</a>
+    <a href="#" class="mobile-nav-link" data-page="rapport">Rapport</a>
+    <a href="../dashboard" class="mobile-nav-link flex items-center mt-4">
+      <i class="ri-user-line ri-lg mr-2"></i>
+      <span>Partie Utilisateur</span>
+    </a>
+  </div>
+</div>
+
+<nav class="fixed top-0 left-0 w-full bg-white shadow-sm z-10">
+  <div class="px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center">
+      <!-- Bouton menu mobile à gauche -->
+      <button id="mobileMenuBtn" class="mobile-menu-btn">
+        <i class="ri-menu-line"></i>
+      </button>
+      
+      <span class="text-xl font-['Pacifico'] text-primary nav-logo ml-2">Orjeun</span>
+    </div>
+    
+    <!-- Liens de navigation desktop -->
+    <div class="desktop-nav-links flex items-center space-x-6">
+      <a href="#" class="nav-link" data-page="creer">Créer</a>
+      <a href="#" class="nav-link active" data-page="stat">Statistiques</a>
+      <a href="#" class="nav-link" data-page="rapport">Rapport</a>
+    </div>
+    
+    <div class="flex items-center space-x-2">
+      <a href="../dashboard" class="hidden md:flex text-gray-600 hover:text-primary transition-colors items-center">
+        <i class="ri-user-line ri-lg mr-1"></i>
+        <span class="hidden md:inline">Partie Utilisateur</span>
+      </a>
+      <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
+        <i class="ri-user-line text-gray-600"></i>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container mx-auto px-4 pt-8 pb-24">
+  <div id="page-stat" class="page-section active">
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-gray-800">Statistiques des Formations</h1>
+      <p class="text-gray-600 mt-1">Analysez les performances de vos formations</p>
+      <div class="h-1 w-20 bg-primary mt-3 rounded-full"></div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <div class="flex flex-col md:flex-row md:items-center justify-between">
+        <div class="flex items-center mb-4 md:mb-0">
+          <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mr-4">
+            <i class="ri-user-3-line text-2xl text-primary"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-gray-800" id="professor-name">Chargement...</h2>
+            <p class="text-gray-600" id="professor-email">email@exemple.com</p>
+          </div>
+        </div>
+        <div class="flex justify-center">
+          <div class="text-center">
+            <p class="text-2xl font-bold text-primary" id="total-formations">0</p>
+            <p class="text-sm text-gray-600">Formations</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="card-stat p-6">
+        <div class="flex items-center">
+          <div class="stat-icon bg-green-100 text-green-600 mr-4">
+            <i class="ri-stack-line"></i>
+          </div>
+          <div>
+            <p class="stat-value text-green-600" id="stat-online">0</p>
+            <p class="stat-title">Formations en ligne</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-stat p-6">
+        <div class="flex items-center">
+          <div class="stat-icon bg-purple-100 text-purple-600 mr-4">
+            <i class="ri-building-line"></i>
+          </div>
+          <div>
+            <p class="stat-value text-purple-600" id="stat-professional">0</p>
+            <p class="stat-title">Formations professionnelles</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-stat p-6">
+        <div class="flex items-center">
+          <div class="stat-icon bg-green-100 text-green-600 mr-4">
+            <i class="ri-checkbox-circle-line"></i>
+          </div>
+          <div>
+            <p class="stat-value text-green-600" id="stat-completed">0</p>
+            <p class="stat-title">Formations complétées</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-stat p-6">
+        <div class="flex items-center">
+          <div class="stat-icon bg-red-100 text-red-600 mr-4">
+            <i class="ri-close-circle-line"></i>
+          </div>
+          <div>
+            <p class="stat-value text-red-600" id="stat-cancelled">0</p>
+            <p class="stat-title">Formations annulées</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">Répartition par type</h3>
+        <div class="chart-container flex items-center justify-center">
+          <canvas id="typeChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">Taux de complétion</h3>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-medium text-gray-700">Formation en ligne</span>
+              <span class="text-sm font-medium text-gray-700" id="online-completion">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill bg-green-600" id="online-progress" style="width: 0%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-medium text-gray-700">Formation professionnelle</span>
+              <span class="text-sm font-medium text-gray-700" id="pro-completion">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill bg-purple-600" id="pro-progress" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-semibold text-gray-800">Formations récentes</h3>
+        <button class="px-3 py-1.5 bg-gray-50 text-gray-600 rounded-button text-sm font-medium hover:bg-gray-100 !rounded-button">
+          Voir tout
+        </button>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Formation</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="recent-formations" class="bg-white divide-y divide-gray-200">
+            <tr>
+              <td colspan="3" class="text-center py-6 text-gray-500">
+                <i class="ri-loader-4-line animate-spin text-xl mr-2"></i>
+                Chargement des formations...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div id="page-creer" class="page-section">
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-10 text-center py-16">
+      <div class="max-w-md mx-auto">
+        <div class="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-6">
+          <i class="ri-add-line text-3xl text-green-600"></i>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Page de création de formation</h2>
+        <p class="text-gray-600 mb-6">Cette page permet de créer de nouvelles formations en ligne ou professionnelles.</p>
+        <button id="createFormationBtn" class="px-6 py-3 bg-primary text-white rounded-button font-medium hover:bg-primary/90 transition-colors">
+          Créer une nouvelle formation
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="page-rapport" class="page-section">
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-10 text-center py-16">
+      <div class="max-w-md mx-auto">
+        <div class="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-6">
+          <i class="ri-file-chart-line text-3xl text-green-600"></i>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Page de rapport de formation</h2>
+        <p class="text-gray-600 mb-6">Cette page présente des rapports détaillés sur les formations.</p>
+        <button id="rapbtn" class="px-6 py-3 bg-green-600 text-white rounded-button font-medium hover:bg-green-700 transition-colors">
+          Générer un rapport
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="notification" class="notification mt-4 py-3 px-4 rounded-md hidden">
+    <div class="flex items-center">
+      <i id="notificationIcon" class="mr-2"></i>
+      <span id="notificationMessage"></span>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const firebaseConfig = {
+    apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+    authDomain: "orjeun-9dec4.firebaseapp.com",
+    databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+    projectId: "orjeun-9dec4",
+    storageBucket: "orjeun-9dec4.appspot.com",
+    messagingSenderId: "979782321937",
+    appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+    measurementId: "G-G316HCYF9E"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+  
+  const userEmail = localStorage.getItem('userEmail');
+  
+  if (!userEmail) {
+    window.location.href = "login";
+    return;
+  }
+  
+  document.getElementById('professor-email').textContent = userEmail;
+  
+  const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
+  const pageSections = document.querySelectorAll('.page-section');
+  
+  navLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Mettre à jour l'état actif pour tous les liens
+      navLinks.forEach(l => l.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Masquer toutes les sections
+      pageSections.forEach(section => section.classList.remove('active'));
+      
+      // Afficher la section cible
+      const targetPage = this.getAttribute('data-page');
+      document.getElementById(`page-${targetPage}`).classList.add('active');
+      
+      // Fermer le menu mobile
+      document.getElementById('mobileMenu').classList.remove('active');
+      document.getElementById('mobileMenuOverlay').classList.remove('active');
+    });
+  });
+  
+  // Gestion du menu mobile
+  document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+    document.getElementById('mobileMenu').classList.add('active');
+    document.getElementById('mobileMenuOverlay').classList.add('active');
+  });
+  
+  document.getElementById('mobileMenuClose').addEventListener('click', function() {
+    document.getElementById('mobileMenu').classList.remove('active');
+    document.getElementById('mobileMenuOverlay').classList.remove('active');
+  });
+  
+  document.getElementById('mobileMenuOverlay').addEventListener('click', function() {
+    document.getElementById('mobileMenu').classList.remove('active');
+    this.classList.remove('active');
+  });
+  
+  document.getElementById('createFormationBtn').addEventListener('click', function() {
+    window.location.href = 'Formation';
+  });
+  
+  document.getElementById('rapbtn').addEventListener('click', function() {
+    window.location.href = 'rapport';
+  });
+  
+  function formatDate(dateString) {
+    if (!dateString) return 'Date non définie';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR');
+  }
+  
+  function showNotification(message, type) {
+    const notification = document.getElementById('notification');
+    const notificationIcon = document.getElementById('notificationIcon');
+    const notificationMessage = document.getElementById('notificationMessage');
+    
+    notification.classList.remove('hidden', 'bg-green-100', 'bg-red-100');
+    notificationIcon.classList.remove('ri-check-line', 'ri-error-warning-line', 'text-green-500', 'text-red-500');
+    
+    if (type === 'success') {
+      notification.classList.add('bg-green-100');
+      notificationIcon.classList.add('ri-check-line', 'text-green-500');
+    } else {
+      notification.classList.add('bg-red-100');
+      notificationIcon.classList.add('ri-error-warning-line', 'text-red-500');
+    }
+    
+    notificationMessage.textContent = message;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => notification.classList.add('hidden'), 300);
+    }, 3000);
+  }
+  
+  function calculateStats(formations) {
+    const stats = {
+      online: 0,
+      professional: 0,
+      completed: 0,
+      cancelled: 0,
+      onlineCompletion: 0,
+      proCompletion: 0
+    };
+    
+    formations.forEach(formation => {
+      if (formation.type === "online") {
+        stats.online++;
+        if (formation.date && new Date(formation.date) < new Date()) {
+          stats.onlineCompletion++;
+        }
+      } else if (formation.type === "professional") {
+        stats.professional++;
+        if (formation.statut === "Terminé") {
+          stats.proCompletion++;
+        }
+      }
+      
+      if (formation.statut === "Terminé") stats.completed++;
+      if (formation.annulee) stats.cancelled++;
+    });
+    
+    if (stats.online > 0) {
+      stats.onlineCompletion = Math.round((stats.onlineCompletion / stats.online) * 100);
+    }
+    
+    if (stats.professional > 0) {
+      stats.proCompletion = Math.round((stats.proCompletion / stats.professional) * 100);
+    }
+    
+    return stats;
+  }
+  
+  function displayFormations(formations) {
+    const recentFormations = document.getElementById('recent-formations');
+    recentFormations.innerHTML = '';
+    
+    if (formations.length === 0) {
+      recentFormations.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center py-6 text-gray-500">
+            Aucune formation trouvée
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    const recent = formations.slice(0, 5);
+    
+    recent.forEach(formation => {
+      const row = document.createElement('tr');
+      row.className = 'formation-row';
+      row.dataset.id = formation.id;
+      row.innerHTML = `
+        <td class="px-4 py-3 whitespace-nowrap">
+          <div class="font-medium text-gray-900">${formation.titre || 'Nom non défini'}</div>
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap">
+          <span class="px-2 py-1 text-xs rounded-full ${formation.type === "online" ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+            ${formation.type === "online" ? 'En ligne' : 'Professionnelle'}
+          </span>
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap text-center">
+          <div class="flex justify-center space-x-3">
+            ${formation.type === "professional" ? `
+              <button class="edit-formation-btn text-green-600 hover:text-green-800">
+                <i class="ri-edit-2-line text-lg"></i>
+              </button>
+            ` : ''}
+            <button class="delete-formation-btn text-red-600 hover:text-red-800">
+              <i class="ri-delete-bin-line text-lg"></i>
+            </button>
+          </div>
+        </td>
+      `;
+      recentFormations.appendChild(row);
+      
+      if (formation.type === "professional") {
+        const editRow = document.createElement('tr');
+        editRow.className = 'hidden edit-row';
+        editRow.dataset.id = formation.id;
+        editRow.innerHTML = `
+          <td colspan="3" class="px-4 py-3 bg-gray-50">
+            <div class="edit-block-container">
+              <h4 class="font-semibold text-lg mb-4">Édition de la formation</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+                  <input type="text" class="edit-title w-full px-3 py-2 border border-gray-300 rounded-button text-sm" value="${formation.titre || ''}">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea class="edit-description w-full px-3 py-2 border border-gray-300 rounded-button text-sm">${formation.description || ''}</textarea>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input type="date" class="edit-date w-full px-3 py-2 border border-gray-300 rounded-button text-sm" value="${formation.date || ''}">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+                  <input type="time" class="edit-time w-full px-3 py-2 border border-gray-300 rounded-button text-sm" value="${formation.heure || ''}">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Lieu</label>
+                  <input type="text" class="edit-lieu w-full px-3 py-2 border border-gray-300 rounded-button text-sm" value="${formation.lieu || ''}">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Participants max</label>
+                  <input type="number" class="edit-participants w-full px-3 py-2 border border-gray-300 rounded-button text-sm" value="${formation.participants || ''}">
+                </div>
+              </div>
+              
+              ${formation.content && formation.content.length > 0 ? `
+                <div class="mt-6">
+                  <h4 class="font-semibold text-lg mb-4">Contenu de la formation</h4>
+                  <div class="edit-content-blocks">
+                    ${formation.content.map((block, index) => renderContentBlock(block, index)).join('')}
+                  </div>
+                </div>
+              ` : ''}
+              
+              <div class="mt-6 flex justify-end space-x-3">
+                <button class="cancel-edit-btn px-4 py-2 border border-gray-300 rounded-button text-gray-700 hover:bg-gray-50 !rounded-button">
+                  Annuler
+                </button>
+                <button class="save-edit-btn px-4 py-2 bg-primary text-white rounded-button hover:bg-primary/90 !rounded-button">
+                  Enregistrer les modifications
+                </button>
+              </div>
+            </div>
+          </td>
+        `;
+        recentFormations.appendChild(editRow);
+      }
+    });
+    
+    document.querySelectorAll('.edit-formation-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const row = this.closest('.formation-row');
+        const formationId = row.dataset.id;
+        
+        document.querySelectorAll('.edit-row').forEach(row => {
+          row.classList.add('hidden');
+        });
+        
+        const editRow = document.querySelector(`.edit-row[data-id="${formationId}"]`);
+        if (editRow) {
+          editRow.classList.remove('hidden');
+        }
+      });
+    });
+    
+    document.querySelectorAll('.delete-formation-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const row = this.closest('.formation-row');
+        const formationId = row.dataset.id;
+        
+        if (confirm('Êtes-vous sûr de vouloir supprimer cette formation ?')) {
+          database.ref('formations/' + formationId).remove()
+            .then(() => {
+              showNotification('Formation supprimée avec succès', 'success');
+              loadProfessorData();
+            })
+            .catch(error => {
+              console.error('Erreur lors de la suppression :', error);
+              showNotification('Erreur lors de la suppression de la formation', 'error');
+            });
+        }
+      });
+    });
+    
+    document.querySelectorAll('.cancel-edit-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const editRow = this.closest('.edit-row');
+        editRow.classList.add('hidden');
+      });
+    });
+    
+    document.querySelectorAll('.save-edit-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const editRow = this.closest('.edit-row');
+        const formationId = editRow.dataset.id;
+        
+        const updatedData = {
+          titre: editRow.querySelector('.edit-title').value,
+          description: editRow.querySelector('.edit-description').value,
+          date: editRow.querySelector('.edit-date').value,
+          heure: editRow.querySelector('.edit-time').value,
+          lieu: editRow.querySelector('.edit-lieu').value,
+          participants: editRow.querySelector('.edit-participants').value
+        };
+        
+        database.ref('formations/' + formationId).update(updatedData)
+          .then(() => {
+            showNotification('Formation mise à jour avec succès', 'success');
+            editRow.classList.add('hidden');
+            loadProfessorData();
+          })
+          .catch(error => {
+            console.error('Erreur lors de la mise à jour :', error);
+            showNotification('Erreur lors de la mise à jour de la formation', 'error');
+          });
+      });
+    });
+  }
+  
+  function renderContentBlock(block, index) {
+    let contentHtml = '';
+    
+    if (block.type === 'text') {
+      contentHtml = `
+        <div class="content-text">${block.content}</div>
+      `;
+    } else if (block.type === 'image') {
+      contentHtml = `
+        <img src="${block.content}" alt="Image de la formation" class="w-full rounded-lg">
+      `;
+    } else if (block.type === 'link') {
+      contentHtml = `
+        <div class="flex items-center">
+          <i class="ri-links-line text-xl text-primary mr-2"></i>
+          <a href="${block.url}" target="_blank" class="text-primary hover:underline">${block.text}</a>
+        </div>
+      `;
+    } else if (block.type === 'pdf') {
+      contentHtml = `
+        <div class="flex items-center">
+          <i class="ri-file-pdf-line text-xl text-primary mr-2"></i>
+          <a href="${block.url}" target="_blank" class="text-primary hover:underline">${block.name}</a>
+        </div>
+      `;
+    } else if (block.type === 'quiz') {
+      const optionsHtml = block.options.map(option => `
+        <div class="quiz-preview-option ${option.correct ? 'correct' : ''}">
+          ${option.text} ${option.correct ? '<span class="text-green-500">(correcte)</span>' : ''}
+        </div>
+      `).join('');
+      
+      contentHtml = `
+        <div class="quiz-preview">
+          <p class="font-medium">${block.question}</p>
+          <div class="quiz-options mt-2">
+            ${optionsHtml}
+          </div>
+        </div>
+      `;
+    }
+    
+    return `
+      <div class="block-card">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-sm font-medium text-gray-700">Bloc ${index + 1} - ${getBlockTypeName(block.type)}</h3>
+          <div class="block-actions">
+            <button class="btn-move move-up" data-index="${index}">
+              <i class="ri-arrow-up-line"></i>
+            </button>
+            <button class="btn-move move-down" data-index="${index}">
+              <i class="ri-arrow-down-line"></i>
+            </button>
+          </div>
+        </div>
+        ${contentHtml}
+      </div>
+    `;
+  }
+  
+  function getBlockTypeName(type) {
+    const names = {
+      text: 'Texte',
+      image: 'Image',
+      link: 'Lien',
+      pdf: 'PDF',
+      quiz: 'Quiz'
+    };
+    return names[type] || 'Inconnu';
+  }
+  
+  let typeChart = null;
+  function updateTypeChart(onlineCount, professionalCount) {
+    const typeCtx = document.getElementById('typeChart').getContext('2d');
+    
+    if (typeChart) {
+      typeChart.destroy();
+    }
+    
+    typeChart = new Chart(typeCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['En ligne', 'Professionnelle'],
+        datasets: [{
+          data: [onlineCount, professionalCount],
+          backgroundColor: ['#10B981', '#8B5CF6'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 15,
+              padding: 20,
+              font: {
+                size: 13
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.raw || 0;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = Math.round((value / total) * 100);
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        },
+        cutout: '70%'
+      }
+    });
+  }
+  
+  function updateUIStats(stats, formations) {
+    document.getElementById('stat-online').textContent = stats.online;
+    document.getElementById('stat-professional').textContent = stats.professional;
+    document.getElementById('stat-completed').textContent = stats.completed;
+    document.getElementById('stat-cancelled').textContent = stats.cancelled;
+    document.getElementById('total-formations').textContent = formations.length;
+    document.getElementById('online-completion').textContent = `${stats.onlineCompletion}%`;
+    document.getElementById('pro-completion').textContent = `${stats.proCompletion}%`;
+    
+    setTimeout(() => {
+      document.getElementById('online-progress').style.width = `${stats.onlineCompletion}%`;
+      document.getElementById('pro-progress').style.width = `${stats.proCompletion}%`;
+    }, 300);
+    
+    displayFormations(formations);
+    
+    updateTypeChart(stats.online, stats.professional);
+  }
+  
+  async function loadProfessorData() {
+    try {
+      const confirmedMembersRef = database.ref('confirmed_adm_member');
+      const confirmedMembersSnapshot = await confirmedMembersRef.once('value');
+      const confirmedMembers = confirmedMembersSnapshot.val();
+      
+      let professorFormations = [];
+      let professorName = "Professeur";
+      let professorFound = false;
+      
+      for (const key in confirmedMembers) {
+        const member = confirmedMembers[key];
+        if (member.email === userEmail) {
+          professorFound = true;
+          professorName = member.nom || member.email.split('@')[0];
+          break;
+        }
+      }
+      
+      if (!professorFound) {
+        showNotification("Utilisateur non trouvé. Redirection vers la page de connexion...", "error");
+        setTimeout(() => {
+          window.location.href = "login";
+        }, 2000);
+        return;
+      }
+      
+      const formationsRef = database.ref('formations');
+      const formationsSnapshot = await formationsRef.once('value');
+      const allFormations = formationsSnapshot.val();
+      
+      for (const key in allFormations) {
+        if (allFormations[key].prof === userEmail) {
+          professorFormations.push({
+            id: key,
+            ...allFormations[key]
+          });
+        }
+      }
+      
+      professorFormations.sort((a, b) => {
+        const dateA = a.dateCreation ? new Date(a.dateCreation) : new Date(0);
+        const dateB = b.dateCreation ? new Date(b.dateCreation) : new Date(0);
+        return dateB - dateA;
+      });
+      
+      document.getElementById('professor-name').textContent = professorName;
+      
+      const stats = calculateStats(professorFormations);
+      
+      updateUIStats(stats, professorFormations);
+      
+    } catch (error) {
+      console.error("Erreur lors du chargement des données:", error);
+      showNotification("Erreur lors du chargement des données", "error");
+      
+      const recentFormations = document.getElementById('recent-formations');
+      recentFormations.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center py-6 text-gray-500">
+            Erreur de chargement des données
+          </td>
+        </tr>
+      `;
+    } finally {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+  }
+  
+  loadProfessorData();
+});
+</script>
+</body>
+</html>

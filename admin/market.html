@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace Vendeurs - Orjeun</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        primary: '#10B981',
+                        secondary: '#4F46E5',
+                        accent: '#F97316',
+                        warning: '#F59E0B'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 1rem;
+            padding: 0 1rem;
+        }
+        @media (min-width: 640px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .product-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (min-width: 1280px) {
+            .product-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 25px;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #777;
+            transition: color 0.2s;
+        }
+        .modal-close:hover {
+            color: #333;
+        }
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        .product-info {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .product-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+        .product-details {
+            flex: 1;
+        }
+        .product-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        .product-price {
+            color: #10B981;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .product-stock {
+            color: #10B981;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            border-color: #10B981;
+            outline: none;
+        }
+        .total-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .total-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .total-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10B981;
+        }
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            flex: 1;
+        }
+        .btn-cancel {
+            background-color: #f1f1f1;
+            color: #555;
+            border: 1px solid #ddd;
+        }
+        .btn-cancel:hover {
+            background-color: #e5e5e5;
+        }
+        .btn-confirm {
+            background-color: #10B981;
+            color: white;
+            border: 1px solid #10B981;
+        }
+        .btn-confirm:hover {
+            background-color: #0da271;
+        }
+        .btn-accent {
+            background-color: #F97316;
+            color: white;
+            border: 1px solid #F97316;
+        }
+        .btn-accent:hover {
+            background-color: #ea580c;
+        }
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        .checkbox-container label {
+            font-weight: 500;
+            color: #444;
+        }
+        .emprunt-fields {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        .validation-error {
+            color: #EF4444;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .phone-input-container {
+            display: flex;
+            align-items: center;
+        }
+        .phone-prefix {
+            background: #f1f5f9;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            font-weight: 500;
+        }
+        .phone-input {
+            border-radius: 0 8px 8px 0 !important;
+        }
+        .lieu-input {
+            margin-top: 10px;
+        }
+        .lieu-hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        .category-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e0e7ff;
+            color: #4f46e5;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body class="pb-20">
+    <div id="toast" class="toast"></div>
+    
+    <div id="purchaseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Commander le produit</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="product-info">
+                    <img id="modalProductImage" src="" alt="Product" class="product-image">
+                    <div class="product-details">
+                        <div class="product-name" id="modalProductName"></div>
+                        <div class="product-price" id="modalProductPrice"></div>
+                        <div class="product-stock" id="modalProductStock"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="quantity" class="form-label">Quantité</label>
+                    <input type="number" id="quantity" min="1" value="1" class="form-input">
+                    <div id="quantityError" class="validation-error">Veuillez entrer une quantité valide</div>
+                </div>
+                
+                <div class="total-section">
+                    <div class="total-label">Montant total</div>
+                    <div class="total-amount" id="totalAmount">0 HTG</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phoneNumber" class="form-label">Numéro de téléphone</label>
+                    <div class="phone-input-container">
+                        <div class="phone-prefix">+509</div>
+                        <input type="tel" id="phoneNumber" class="form-input phone-input" placeholder="34 56 78 90" pattern="[0-9]{8}" required>
+                    </div>
+                    <div id="phoneError" class="validation-error">Veuillez entrer un numéro valide (8 chiffres)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lieuxInput" class="form-label">Lieux de disponibilité</label>
+                    <input 
+                        type="text" 
+                        id="lieuxInput" 
+                        class="form-input lieu-input" 
+                        placeholder="Entrez les villes séparées par des virgules (ex: Port-au-Prince, Pétion-Ville, Cap-Haïtien)"
+                    >
+                    <div class="lieu-hint">Séparez les noms de villes par des virgules</div>
+                </div>
+                
+                <div class="checkbox-container">
+                    <input type="checkbox" id="empruntCheckbox">
+                    <label for="empruntCheckbox">Je souhaite faire un emprunt</label>
+                </div>
+                
+                <div id="empruntFields" class="emprunt-fields">
+                    <div class="form-group">
+                        <label for="empruntAmount" class="form-label">Montant de l'emprunt (HTG)</label>
+                        <input type="number" id="empruntAmount" min="0" class="form-input" placeholder="Entrez le montant">
+                        <div id="empruntError" class="validation-error">Le montant ne peut pas dépasser le total</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="cancelPurchase">Annuler</button>
+                <button class="btn btn-confirm" id="confirmPurchase">Commander</button>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="bg-white shadow-md fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <span class="text-2xl font-['Pacifico'] text-primary">Orjeun</span>
+                <a href="../dashboard" class="ml-4 text-gray-600 hover:text-primary transition-colors flex items-center">
+                    <i class="ri-user-line ri-lg mr-1"></i>
+                    <span>Partie Utilisateur</span>
+                </a>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <span id="userNameNav" class="font-medium text-gray-700">Vendeur</span>
+                <div class="w-8 h-8 flex items-center justify-center">
+                    <i class="ri-user-line ri-xl text-gray-600"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mt-16 pt-4 px-4 bg-white shadow-sm">
+        <div class="relative mb-4">
+            <input id="search-input" type="text" placeholder="Rechercher un produit..." class="w-full py-3 pl-10 pr-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center pointer-events-none">
+                <i class="ri-search-line text-gray-400"></i>
+            </div>
+        </div>
+
+        <div id="filter-buttons" class="flex overflow-x-auto pb-4 gap-2 no-scrollbar">
+        </div>
+
+        <div class="flex justify-between items-center py-3 border-t border-gray-100">
+            <span id="products-count" class="text-sm text-gray-500">0 produits trouvés</span>
+            <div class="relative">
+                <select id="sort-select" class="appearance-none bg-transparent pr-8 py-1 text-sm text-gray-700 focus:outline-none cursor-pointer">
+                    <option value="default">Trier par</option>
+                    <option value="price-asc">Prix croissant</option>
+                    <option value="price-desc">Prix décroissant</option>
+                    <option value="newest">Plus récents</option>
+                </select>
+                <div class="absolute right-0 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center pointer-events-none">
+                    <i class="ri-arrow-down-s-line text-gray-500"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="product-grid" class="product-grid mt-4 mb-20">
+        <div class="col-span-full text-center py-10">
+            <i class="ri-loader-4-line animate-spin text-4xl text-primary"></i>
+            <p class="mt-3 text-gray-500">Chargement des produits...</p>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex justify-around items-center p-3">
+        <a href="#" class="flex flex-col items-center text-primary">
+            <div class="w-6 h-6 flex items-center justify-center">
+                <i class="ri-shopping-bag-line ri-lg"></i>
+            </div>
+            <span class="text-xs mt-1">Marketplace</span>
+        </a>
+        <a href="stat_vendeur" class="flex flex-col items-center text-gray-500">
+            <div class="w-6 h-6 flex items-center justify-center">
+                <i class="ri-bar-chart-line ri-lg"></i>
+            </div>
+            <span class="text-xs mt-1">Stats</span>
+        </a>
+        <a href="profil" class="flex flex-col items-center text-gray-500">
+            <div class="w-6 h-6 flex items-center justify-center">
+                <i class="ri-user-line ri-lg"></i>
+            </div>
+            <span class="text-xs mt-1">Profil</span>
+        </a>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+            authDomain: "orjeun-9dec4.firebaseapp.com",
+            databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+            projectId: "orjeun-9dec4",
+            storageBucket: "orjeun-9dec4.appspot.com",
+            messagingSenderId: "979782321937",
+            appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+            measurementId: "G-G316HCYF9E"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const userEmail = sessionStorage.getItem('userEmail');
+            const userPassword = sessionStorage.getItem('userPassword');
+            
+            if (!userEmail || !userPassword) {
+                window.location.href = 'login';
+                return;
+            }
+
+            database.ref('confirmed_adm_member').once('value').then(snapshot => {
+                const users = snapshot.val();
+                let userFound = null;
+
+                if (users) {
+                    for (const key in users) {
+                        const user = users[key];
+                        if (user.email === userEmail && user.password === userPassword) {
+                            userFound = user;
+                            break;
+                        }
+                    }
+                }
+
+                if (userFound) {
+                    document.getElementById('userNameNav').textContent = userFound.nom;
+                    sessionStorage.setItem('userName', userFound.nom);
+                    localStorage.setItem('userRole', userFound.role);
+                    initializeApp();
+                } else {
+                    window.location.href = 'login';
+                }
+            }).catch(error => {
+                console.error("Erreur de recherche:", error);
+                window.location.href = 'login';
+            });
+
+            function initializeApp() {
+                const filterButtonsContainer = document.getElementById('filter-buttons');
+                const productGrid = document.getElementById('product-grid');
+                const searchInput = document.getElementById('search-input');
+                const sortSelect = document.getElementById('sort-select');
+                const productsCountSpan = document.getElementById('products-count');
+                const toastElement = document.getElementById('toast');
+                
+                const purchaseModal = document.getElementById('purchaseModal');
+                const closeModalBtn = document.getElementById('closeModal');
+                const cancelPurchaseBtn = document.getElementById('cancelPurchase');
+                const confirmPurchaseBtn = document.getElementById('confirmPurchase');
+                const quantityInput = document.getElementById('quantity');
+                const modalProductName = document.getElementById('modalProductName');
+                const modalProductPrice = document.getElementById('modalProductPrice');
+                const modalProductStock = document.getElementById('modalProductStock');
+                const modalProductImage = document.getElementById('modalProductImage');
+                const totalAmountElement = document.getElementById('totalAmount');
+                const empruntCheckbox = document.getElementById('empruntCheckbox');
+                const empruntFields = document.getElementById('empruntFields');
+                const empruntAmountInput = document.getElementById('empruntAmount');
+                const phoneInput = document.getElementById('phoneNumber');
+                const lieuxInput = document.getElementById('lieuxInput');
+                
+                const quantityError = document.getElementById('quantityError');
+                const phoneError = document.getElementById('phoneError');
+                const empruntError = document.getElementById('empruntError');
+                
+                let currentProduct = null;
+                let allProducts = [];
+                let filteredProducts = [];
+                let activeLocation = 'Tous';
+                let searchTerm = '';
+                let currentSort = 'default';
+
+                function showToast(message, duration = 3000) {
+                    toastElement.textContent = message;
+                    toastElement.classList.add('show');
+                    
+                    setTimeout(() => {
+                        toastElement.classList.remove('show');
+                    }, duration);
+                }
+
+                function openPurchaseModal(product) {
+                    currentProduct = product;
+                    modalProductName.textContent = product.name;
+                    modalProductPrice.textContent = `${product.price.toLocaleString('fr-FR')} HTG`;
+                    modalProductStock.textContent = `Stock disponible: ${product.stock}`;
+                    modalProductImage.src = product.imageUrl;
+                    quantityInput.value = 1;
+                    empruntCheckbox.checked = false;
+                    empruntFields.style.display = 'none';
+                    empruntAmountInput.value = '';
+                    phoneInput.value = '';
+                    lieuxInput.value = '';
+                    quantityError.style.display = 'none';
+                    phoneError.style.display = 'none';
+                    empruntError.style.display = 'none';
+                    
+                    calculateTotal();
+                    
+                    quantityInput.setAttribute('max', product.stock);
+                    
+                    purchaseModal.classList.add('show');
+                }
+
+                function closePurchaseModal() {
+                    purchaseModal.classList.remove('show');
+                }
+
+                function calculateTotal() {
+                    if (!currentProduct) return;
+                    
+                    const quantity = parseInt(quantityInput.value) || 1;
+                    const total = quantity * currentProduct.price;
+                    totalAmountElement.textContent = `${total.toLocaleString('fr-FR')} HTG`;
+                    
+                    if (empruntCheckbox.checked) {
+                        validateEmprunt();
+                    }
+                }
+
+                function validateEmprunt() {
+                    const total = parseInt(totalAmountElement.textContent.replace(/\D/g, '')) || 0;
+                    const emprunt = parseInt(empruntAmountInput.value) || 0;
+                    
+                    if (emprunt > total) {
+                        empruntError.textContent = "L'emprunt ne peut pas dépasser le montant total";
+                        empruntError.style.display = 'block';
+                        return false;
+                    } else if (emprunt < 0) {
+                        empruntError.textContent = "Le montant de l'emprunt doit être positif";
+                        empruntError.style.display = 'block';
+                        return false;
+                    } else {
+                        empruntError.style.display = 'none';
+                        return true;
+                    }
+                }
+
+                function validatePhone() {
+                    const phone = phoneInput.value.replace(/\D/g, '');
+                    
+                    if (!phone || phone.length !== 8) {
+                        phoneError.style.display = 'block';
+                        return false;
+                    } else {
+                        phoneError.style.display = 'none';
+                        return true;
+                    }
+                }
+
+                function validateQuantity() {
+                    const quantity = parseInt(quantityInput.value) || 0;
+                    
+                    if (quantity < 1 || quantity > currentProduct.stock) {
+                        quantityError.style.display = 'block';
+                        return false;
+                    } else {
+                        quantityError.style.display = 'none';
+                        return true;
+                    }
+                }
+
+                function validateLieux() {
+                    const lieux = lieuxInput.value.trim();
+                    
+                    if (!lieux) {
+                        showToast("Veuillez indiquer au moins un lieu de disponibilité");
+                        return false;
+                    }
+                    
+                    return true;
+                }
+
+                empruntCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        empruntFields.style.display = 'block';
+                    } else {
+                        empruntFields.style.display = 'none';
+                        empruntAmountInput.value = '';
+                        empruntError.style.display = 'none';
+                    }
+                });
+                
+                empruntAmountInput.addEventListener('input', validateEmprunt);
+                phoneInput.addEventListener('input', validatePhone);
+                quantityInput.addEventListener('input', calculateTotal);
+
+                closeModalBtn.addEventListener('click', closePurchaseModal);
+                cancelPurchaseBtn.addEventListener('click', closePurchaseModal);
+                
+                confirmPurchaseBtn.addEventListener('click', function() {
+                    if (!currentProduct) return;
+                    
+                    const quantity = parseInt(quantityInput.value) || 0;
+                    const isEmprunt = empruntCheckbox.checked;
+                    const empruntAmount = parseInt(empruntAmountInput.value) || 0;
+                    const phone = phoneInput.value.replace(/\D/g, '');
+                    const lieux = lieuxInput.value.trim();
+                    
+                    if (!validateQuantity() || !validatePhone() || !validateLieux()) {
+                        return;
+                    }
+                    
+                    if (isEmprunt && !validateEmprunt()) {
+                        return;
+                    }
+                    
+                    const total = quantity * currentProduct.price;
+                    const userName = sessionStorage.getItem('userName') || "Vendeur";
+                    
+                    const order = {
+                        productId: currentProduct.id,
+                        productName: currentProduct.name,
+                        buyerName: userName,
+                        buyerEmail: userEmail,
+                        buyerPhone: phone,
+                        quantity: quantity,
+                        totalAmount: total,
+                        lieux: lieux,
+                        status: "pending",
+                        date: firebase.database.ServerValue.TIMESTAMP,
+                        categoryName: currentProduct.categoryName || '' // Ajout de la catégorie
+                    };
+                    
+                    if (isEmprunt) {
+                        order.emprunt = {
+                            amount: empruntAmount,
+                            date: firebase.database.ServerValue.TIMESTAMP,
+                            status: "pending"
+                        };
+                    }
+                    
+                    const newOrderRef = database.ref('unconfirmed_product').push();
+                    newOrderRef.set(order)
+                        .then(() => {
+                            const newStock = currentProduct.stock - quantity;
+                            database.ref(`produits/${currentProduct.id}/Quantity_actual`).set(newStock)
+                                .then(() => {
+                                    showToast("Commande enregistrée avec succès !");
+                                    closePurchaseModal();
+                                    loadProducts();
+                                })
+                                .catch(error => {
+                                    console.error("Erreur de mise à jour du stock:", error);
+                                    showToast("Erreur lors de la mise à jour du stock");
+                                });
+                        })
+                        .catch(error => {
+                            console.error("Erreur lors de l'enregistrement:", error);
+                            showToast("Erreur lors de la soumission de la commande");
+                        });
+                });
+
+                function loadProducts() {
+                    database.ref('produits').on('value', (snapshot) => {
+                        allProducts = [];
+                        const products = snapshot.val() || {};
+                        
+                        Object.keys(products).forEach(key => {
+                            const product = products[key];
+                            if (product.Quantity_actual > 0) {
+                                allProducts.push({
+                                    id: key,
+                                    name: product.name || 'Produit sans nom',
+                                    price: product.price || 0,
+                                    region: product.region || 'Lieu inconnu',
+                                    imageUrl: product.imageUrl || '',
+                                    whatsapp: product.Num_vendeur || '',
+                                    createdAt: product.createdAt || 0,
+                                    stock: product.Quantity_actual,
+                                    categoryName: product.categoryName || '' // Ajout de la catégorie
+                                });
+                            }
+                        });
+                        
+                        filteredProducts = [...allProducts];
+                        renderFilterButtons();
+                        renderProducts();
+                    }, error => {
+                        console.error("Erreur de récupération des produits:", error);
+                        renderNoProductsMessage("Erreur lors du chargement des produits");
+                    });
+                }
+
+                function renderNoProductsMessage(message = "Aucun produit pour le moment.") {
+                    filterButtonsContainer.innerHTML = '';
+                    productGrid.innerHTML = `
+                        <div class="col-span-full text-center text-gray-500 py-10">
+                            ${message}
+                        </div>
+                    `;
+                    productsCountSpan.textContent = '0 produit trouvé';
+                }
+
+                function renderFilterButtons() {
+                    const locations = Array.from(new Set(allProducts.map(p => p.region)));
+                    filterButtonsContainer.innerHTML = '';
+                    const allBtn = document.createElement('button');
+                    allBtn.textContent = 'Tous';
+                    allBtn.className = getFilterButtonClasses('Tous');
+                    allBtn.addEventListener('click', () => {
+                        activeLocation = 'Tous';
+                        updateFilterButtonsStyling();
+                        applyFilters();
+                    });
+                    filterButtonsContainer.appendChild(allBtn);
+
+                    locations.forEach(loc => {
+                        const btn = document.createElement('button');
+                        btn.textContent = loc;
+                        btn.className = getFilterButtonClasses(loc);
+                        btn.addEventListener('click', () => {
+                            activeLocation = loc;
+                            updateFilterButtonsStyling();
+                            applyFilters();
+                        });
+                        filterButtonsContainer.appendChild(btn);
+                    });
+
+                    updateFilterButtonsStyling();
+                }
+
+                function getFilterButtonClasses(location) {
+                    const isActive = (location === activeLocation);
+                    const base = 'px-4 py-2 rounded-full text-sm whitespace-nowrap !rounded-button cursor-pointer transition-colors';
+                    return isActive
+                        ? `${base} bg-primary text-white`
+                        : `${base} bg-gray-100 text-gray-700`;
+                }
+
+                function updateFilterButtonsStyling() {
+                    Array.from(filterButtonsContainer.children).forEach(btn => {
+                        const loc = btn.textContent.trim();
+                        if (loc === activeLocation) {
+                            btn.classList.remove('bg-gray-100', 'text-gray-700');
+                            btn.classList.add('bg-primary', 'text-white');
+                        } else {
+                            btn.classList.remove('bg-primary', 'text-white');
+                            btn.classList.add('bg-gray-100', 'text-gray-700');
+                        }
+                    });
+                }
+
+                function applyFilters() {
+                    if (activeLocation === 'Tous') {
+                        filteredProducts = [...allProducts];
+                    } else {
+                        filteredProducts = allProducts.filter(p => p.region === activeLocation);
+                    }
+                    if (searchTerm) {
+                        filteredProducts = filteredProducts.filter(p =>
+                            p.name.toLowerCase().includes(searchTerm.toLowerCase())
+                        );
+                    }
+                    switch (currentSort) {
+                        case 'price-asc':
+                            filteredProducts.sort((a, b) => a.price - b.price);
+                            break;
+                        case 'price-desc':
+                            filteredProducts.sort((a, b) => b.price - a.price);
+                            break;
+                        case 'newest':
+                            filteredProducts.sort((a, b) => b.createdAt - a.createdAt);
+                            break;
+                        default:
+                            break;
+                    }
+                    renderProducts();
+                }
+
+                function renderProducts() {
+                    productGrid.innerHTML = '';
+                    if (filteredProducts.length === 0) {
+                        productGrid.innerHTML = `
+                            <div class="col-span-full text-center text-gray-500 py-10">
+                                Aucun produit correspondant à votre recherche.
+                            </div>
+                        `;
+                        productsCountSpan.textContent = '0 produit trouvé';
+                        return;
+                    }
+                    productsCountSpan.textContent = `${filteredProducts.length} produit${filteredProducts.length > 1 ? 's' : ''} trouvé${filteredProducts.length > 1 ? 's' : ''}`;
+                    filteredProducts.forEach(prod => {
+                        const card = document.createElement('div');
+                        card.className = 'bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300';
+                        card.innerHTML = `
+                            <div class="relative h-48 overflow-hidden">
+                                <img src="${prod.imageUrl}" alt="${prod.name}" class="w-full h-full object-cover object-top">
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-semibold text-gray-800 mb-1">${prod.name}</h3>
+                                <p class="text-primary font-medium text-lg mb-2">${prod.price.toLocaleString('fr-FR')} HTG</p>
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    <div class="flex items-center text-gray-500 text-sm">
+                                        <div class="w-4 h-4 flex items-center justify-center mr-1">
+                                            <i class="ri-map-pin-line"></i>
+                                        </div>
+                                        <span>${prod.region}</span>
+                                    </div>
+                                    <div class="flex items-center text-secondary font-medium text-sm">
+                                        <div class="w-4 h-4 flex items-center justify-center mr-1">
+                                            <i class="ri-store-line"></i>
+                                        </div>
+                                        <span>Stock: ${prod.stock}</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Affichage de la catégorie -->
+                                ${prod.categoryName ? `
+                                <div class="mt-1">
+                                    <span class="category-tag">
+                                        <i class="ri-price-tag-3-line ri-xs mr-1"></i>${prod.categoryName}
+                                    </span>
+                                </div>
+                                ` : ''}
+                                
+                                <button class="purchase-btn block w-full py-2.5 bg-primary text-white text-center rounded-lg font-medium hover:bg-primary/90 transition-colors !rounded-button cursor-pointer mt-3">
+                                    Commander
+                                </button>
+                            </div>
+                        `;
+                        
+                        const purchaseBtn = card.querySelector('.purchase-btn');
+                        purchaseBtn.addEventListener('click', () => openPurchaseModal(prod));
+                        
+                        productGrid.appendChild(card);
+                    });
+                }
+
+                searchInput.addEventListener('input', function() {
+                    searchTerm = this.value.trim();
+                    applyFilters();
+                });
+
+                sortSelect.addEventListener('change', function() {
+                    currentSort = this.value;
+                    applyFilters();
+                });
+
+                loadProducts();
+            }
+        });
+    </script>
+</body>
+</html>
