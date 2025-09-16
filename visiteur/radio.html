@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Orjeun - Écoutez en direct</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#047857'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8fafc;
+            background-image: url('img2.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-blend-mode: overlay;
+            background-color: rgba(248, 250, 252, 0.92);
+        }
+        .header-bg {
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+        .player-bg {
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+        }
+        .audio-wave {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+        }
+        .audio-wave span {
+            display: block;
+            width: 3px;
+            margin: 0 2px;
+            background-color: #10b981;
+            animation: wave 1.2s infinite ease-in-out;
+        }
+        @keyframes wave {
+            0%, 100% { height: 10px; }
+            50% { height: 40px; }
+        }
+        .audio-wave span:nth-child(2) { animation-delay: 0.1s; }
+        .audio-wave span:nth-child(3) { animation-delay: 0.2s; }
+        .audio-wave span:nth-child(4) { animation-delay: 0.3s; }
+        .audio-wave span:nth-child(5) { animation-delay: 0.4s; }
+        .audio-wave span:nth-child(6) { animation-delay: 0.5s; }
+        .audio-wave span:nth-child(7) { animation-delay: 0.6s; }
+        .audio-wave span:nth-child(8) { animation-delay: 0.7s; }
+        .audio-wave span:nth-child(9) { animation-delay: 0.8s; }
+        .audio-wave span:nth-child(10) { animation-delay: 0.9s; }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 5px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            background-image: linear-gradient(#10b981, #10b981);
+            background-repeat: no-repeat;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 15px;
+            width: 15px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            box-shadow: 0 0 2px 0 #555;
+        }
+        
+        input[type="range"]::-webkit-slider-runnable-track {
+            -webkit-appearance: none;
+            box-shadow: none;
+            border: none;
+            background: transparent;
+        }
+        
+        .custom-checkbox {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .custom-checkbox input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .checkmark {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e2e8f0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .checkmark:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .checkmark {
+            background-color: #10b981;
+        }
+        
+        input:checked + .checkmark:before {
+            transform: translateX(24px);
+        }
+        
+        .chat-container {
+            height: 300px;
+            overflow-y: auto;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #10b981;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        .mobile-nav {
+            display: none;
+            width: 100%;
+        }
+        .mobile-nav.active {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .header-container {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .desktop-nav {
+                display: none;
+            }
+            .mobile-user-profile {
+                display: flex;
+                align-items: center;
+                margin-top: 0.5rem;
+            }
+            .player-container {
+                flex-direction: column;
+            }
+            .player-info {
+                width: 100%;
+                margin-bottom: 1.5rem;
+            }
+            .player-controls {
+                width: 100%;
+            }
+            .social-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="toast" class="toast"></div>
+
+    <header class="header-bg shadow-sm">
+        <div class="container mx-auto px-4 py-4 header-container flex items-center justify-between">
+            <div class="flex items-center w-full">
+                <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center">
+                        <img src="../img1-1.png" alt="Logo Orjeun" class="w-16 h-16 mr-3">
+                        <h1 class="text-2xl md:text-3xl font-bold text-primary">Radio ORJEUN</h1>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <div class="user-profile">
+                            <span class="text-gray-700">Visiteur</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <section class="mb-12">
+            <div class="player-bg rounded-lg shadow-md p-6 md:p-8">
+                <div class="player-container flex flex-col md:flex-row items-center">
+                    <div class="player-info w-full md:w-1/2 mb-8 md:mb-0 md:pr-8">
+                        <div class="text-center md:text-left">
+                            <div id="live-indicator" class="inline-block px-3 py-1 bg-red-100 text-red-600 rounded-full text-sm font-medium mb-4">
+                                EN DIRECT
+                            </div>
+                            
+                            <h2 id="current-show-title" class="text-2xl md:text-3xl font-bold mb-2">Chargement...</h2>
+                            <p id="current-show-host" class="text-gray-600 mb-4">Chargement...</p>
+                            <div class="flex items-center justify-center md:justify-start mb-6">
+                                <div class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full mr-2">
+                                    <i class="ri-time-line text-gray-600"></i>
+                                </div>
+                                <span id="current-show-time" class="text-gray-600">Chargement...</span>
+                            </div>
+                            
+                            <div class="audio-wave mx-auto md:mx-0 mb-6">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            
+                            <div class="flex items-center justify-center md:justify-start mb-6">
+                                <button id="play-btn" class="w-12 h-12 flex items-center justify-center bg-primary text-white rounded-full mr-4 !rounded-button">
+                                    <i class="ri-play-fill ri-lg"></i>
+                                </button>
+                                <div class="flex-1 max-w-xs">
+                                    <input type="range" id="volume" min="0" max="100" value="80" class="w-full">
+                                </div>
+                                <div class="w-8 h-8 flex items-center justify-center ml-4">
+                                    <i class="ri-volume-up-line text-gray-600 ri-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="player-controls w-full md:w-1/2">
+                        <div class="bg-green-50 rounded-lg p-6">
+                            <h3 class="text-lg font-bold mb-4">Prochain programme</h3>
+                            <div class="bg-white p-4 rounded-lg shadow-sm">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="font-medium text-gray-900 mb-1" id="next-show-title">Chargement...</div>
+                                        <div class="text-sm text-gray-600" id="next-show-time">Chargement...</div>
+                                    </div>
+                                    <div class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                        <span id="next-show-countdown">--:--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">Programme du jour</h2>
+                <p id="current-date" class="text-gray-600">Chargement...</p>
+            </div>
+            
+            <div class="player-bg rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-green-50">
+                            <tr>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horaire</th>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programme</th>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Animateur</th>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catégorie</th>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-body" class="divide-y divide-gray-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="player-bg rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-bold mb-4">Suivez-nous</h3>
+                    <div class="social-grid grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <a href="https://www.facebook.com/orjeun2015" class="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 !rounded-button">
+                            <div class="w-8 h-8 flex items-center justify-center text-blue-600 mb-1">
+                                <i class="ri-facebook-fill ri-lg"></i>
+                            </div>
+                            <span class="text-xs">Facebook</span>
+                        </a>
+                        <a href="#" class="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 !rounded-button">
+                            <div class="w-8 h-8 flex items-center justify-center text-sky-500 mb-1">
+                                <i class="ri-twitter-fill ri-lg"></i>
+                            </div>
+                            <span class="text-xs">Twitter</span>
+                        </a>
+                        <a href="https://www.instagram.com/orjeunproduction?igsh=MWhnNjN5Zms0MGN1eg==" class="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 !rounded-button">
+                            <div class="w-8 h-8 flex items-center justify-center text-purple-600 mb-1">
+                                <i class="ri-instagram-line ri-lg"></i>
+                            </div>
+                            <span class="text-xs">Instagram</span>
+                        </a>
+                        <a href="https://youtube.com/@orjeunproduction?si=RZg5H1DYXceegaX2" class="flex flex-col items-center justify-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 !rounded-button">
+                            <div class="w-8 h-8 flex items-center justify-center text-red-600 mb-1">
+                                <i class="ri-youtube-fill ri-lg"></i>
+                            </div>
+                            <span class="text-xs">YouTube</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="player-bg rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-bold mb-4">Contactez-nous</h3>
+                    <p class="text-gray-600 mb-4">Vous avez des questions ou suggestions ? Contactez notre équipe :</p>
+                    <div class="flex items-center mb-3">
+                        <div class="w-8 h-8 flex items-center justify-center bg-green-100 text-green-600 rounded-full mr-3">
+                            <i class="ri-mail-line"></i>
+                        </div>
+                        <span>orjeunproduction@gmail.com</span>
+                    </div>
+                    <div class="flex items-center mb-3">
+                        <div class="w-8 h-8 flex items-center justify-center bg-green-100 text-green-600 rounded-full mr-3">
+                            <i class="ri-phone-line"></i>
+                        </div>
+                        <span>+509 47 90 1525</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 flex items-center justify-center bg-green-100 text-green-600 rounded-full mr-3">
+                            <i class="ri-map-pin-line"></i>
+                        </div>
+                        <span>Nord, Haïti</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="fixed bottom-0 left-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)] px-2 py-2 grid grid-cols-5 gap-1">
+        <a href="dashboard" class="flex flex-col items-center justify-center text-gray-500">
+            <div class="w-6 h-6 flex items-center justify-center">
+                <i class="ri-home-5-fill ri-lg"></i>
+            </div>
+            <span class="text-xs mt-1">Accueil</span>
+        </a>
+        <a href="forma" class="flex flex-col items-center justify-center text-gray-500">
+            <div class="w-6 h-6 flex items-center justify-center">
+                <i class="ri-book-open-line ri-lg"></i>
+            </div>
+            <span class="text-xs mt-1">Formations</span>
+        </a>
+        <a href="forum" class="flex flex-col items-center justify-center text-gray-500">
+            <div class="w-6 h-6 flex items-center justify-center">
+                <i class="ri-discuss-line ri-lg"></i>
+            </div>
+            <span class="text-xs mt-1">Forum</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center text-primary">
+            <div class="w-6 h-6 flex items-center justify-center">
+                <i class="ri-radio-2-line ri-lg"></i>
+            </div>
+            <span class="text-xs mt-1">Radio</span>
+        </a>
+        <a href="market" class="flex flex-col items-center justify-center text-gray-500">
+            <div class="w-6 h-6 flex items-center justify-center">
+                <i class="ri-shopping-bag-line ri-lg"></i>
+            </div>
+            <span class="text-xs mt-1">Boutique</span>
+        </a>
+    </div>
+
+    <audio id="radio-player" src="https://stream.zeno.fm/wn5p6cc48nhvv"></audio>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+            authDomain: "orjeun-9dec4.firebaseapp.com",
+            databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+            projectId: "orjeun-9dec4",
+            storageBucket: "orjeun-9dec4.appspot.com",
+            messagingSenderId: "979782321937",
+            appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+            measurementId: "G-G316HCYF9E"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.backgroundColor = isSuccess ? '#10b981' : '#ef4444';
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const audioPlayer = document.getElementById('radio-player');
+            const playButton = document.getElementById('play-btn');
+            const volumeSlider = document.getElementById('volume');
+            const audioWave = document.querySelector('.audio-wave');
+            let isPlaying = false;
+            
+            const horairesRef = database.ref('horaire');
+            
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('fr-FR', options);
+            
+            horairesRef.on('value', (snapshot) => {
+                const horaires = snapshot.val();
+                const scheduleBody = document.getElementById('schedule-body');
+                scheduleBody.innerHTML = '';
+                
+                let currentShow = null;
+                let nextShow = null;
+                const currentHour = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                
+                const jours = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+                const todayIndex = now.getDay();
+                const todayName = jours[todayIndex];
+                
+                if (!horaires) {
+                    currentShow = {
+                        titre: "Musique",
+                        animateur: "Auto DJ",
+                        heure_debut: "00:00",
+                        heure_fin: "24:00",
+                        categorie: "Loisir"
+                    };
+                    
+                    document.getElementById('current-show-title').textContent = "Musique";
+                    document.getElementById('current-show-host').textContent = "Avec Auto DJ";
+                    document.getElementById('current-show-time').textContent = "00:00 - 24:00";
+                    
+                    document.getElementById('next-show-title').textContent = "Aucun programme prévu";
+                    document.getElementById('next-show-time').textContent = "";
+                    return;
+                }
+                
+                const horairesArray = Object.values(horaires)
+                    .filter(h => h.jour === todayName)
+                    .sort((a, b) => a.heure_debut.localeCompare(b.heure_debut));
+                
+                for (const horaire of horairesArray) {
+                    if (horaire.heure_fin < currentHour) {
+                        continue;
+                    }
+                    
+                    if (currentHour >= horaire.heure_debut && currentHour < horaire.heure_fin) {
+                        currentShow = horaire;
+                    }
+                    
+                    if (!nextShow && horaire.heure_debut > currentHour) {
+                        nextShow = horaire;
+                    }
+                }
+                
+                if (!currentShow) {
+                    currentShow = {
+                        titre: "Musique",
+                        animateur: "Auto DJ",
+                        heure_debut: "00:00",
+                        heure_fin: "24:00",
+                        categorie: "Loisir"
+                    };
+                }
+                
+                document.getElementById('current-show-title').textContent = currentShow.titre;
+                document.getElementById('current-show-host').textContent = `Avec ${currentShow.animateur}`;
+                document.getElementById('current-show-time').textContent = `${currentShow.heure_debut} - ${currentShow.heure_fin}`;
+                
+                if (nextShow) {
+                    document.getElementById('next-show-title').textContent = nextShow.titre;
+                    document.getElementById('next-show-time').textContent = `${nextShow.heure_debut} - ${nextShow.heure_fin}`;
+                    
+                    const [nextHour, nextMinute] = nextShow.heure_debut.split(':').map(Number);
+                    const nextTime = new Date();
+                    nextTime.setHours(nextHour, nextMinute, 0, 0);
+                    
+                    setInterval(() => {
+                        const now = new Date();
+                        const diffMs = nextTime - now;
+                        
+                        if (diffMs > 0) {
+                            const diffMinutes = Math.floor(diffMs / 60000);
+                            const diffHours = Math.floor(diffMinutes / 60);
+                            const remainingMinutes = diffMinutes % 60;
+                            
+                            document.getElementById('next-show-countdown').textContent = 
+                                `${diffHours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}`;
+                        } else {
+                            document.getElementById('next-show-countdown').textContent = "En cours";
+                        }
+                    }, 60000);
+                    
+                    const diffMs = nextTime - now;
+                    if (diffMs > 0) {
+                        const diffMinutes = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMinutes / 60);
+                        const remainingMinutes = diffMinutes % 60;
+                        
+                        document.getElementById('next-show-countdown').textContent = 
+                            `${diffHours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}`;
+                    } else {
+                        document.getElementById('next-show-countdown').textContent = "En cours";
+                    }
+                } else {
+                    document.getElementById('next-show-title').textContent = "Aucun programme prévu";
+                    document.getElementById('next-show-time').textContent = "";
+                    document.getElementById('next-show-countdown').textContent = "--:--";
+                }
+                
+                horairesArray.forEach(horaire => {
+                    if (horaire.heure_fin < currentHour) {
+                        return;
+                    }
+                    
+                    const row = document.createElement('tr');
+                    
+                    let statusHtml;
+                    if (currentHour >= horaire.heure_debut && currentHour < horaire.heure_fin) {
+                        row.classList.add('bg-green-50', 'hover:bg-green-100');
+                        statusHtml = `
+                            <span class="text-red-600 font-medium flex items-center">
+                                <span class="w-2 h-2 bg-red-600 rounded-full mr-2 animate-pulse"></span>
+                                En direct
+                            </span>
+                        `;
+                    } else if (currentHour >= horaire.heure_fin) {
+                        row.classList.add('hover:bg-gray-50');
+                        statusHtml = `<span class="text-gray-500">Terminé</span>`;
+                    } else {
+                        row.classList.add('hover:bg-gray-50');
+                        statusHtml = `<span class="text-gray-500">À venir</span>`;
+                    }
+                    
+                    let categoryColor;
+                    switch(horaire.categorie) {
+                        case 'Musique':
+                            categoryColor = 'bg-indigo-100 text-indigo-800';
+                            break;
+                        case 'Actualités':
+                            categoryColor = 'bg-blue-100 text-blue-800';
+                            break;
+                        case 'Culture':
+                            categoryColor = 'bg-green-100 text-green-800';
+                            break;
+                        case 'Divertissement':
+                            categoryColor = 'bg-yellow-100 text-yellow-800';
+                            break;
+                        case 'Science':
+                            categoryColor = 'bg-purple-100 text-purple-800';
+                            break;
+                        case 'Trafic & Musique':
+                            categoryColor = 'bg-red-100 text-red-800';
+                            break;
+                        case 'Débat':
+                            categoryColor = 'bg-orange-100 text-orange-800';
+                            break;
+                        case 'Détente':
+                            categoryColor = 'bg-pink-100 text-pink-800';
+                            break;
+                        default:
+                            categoryColor = 'bg-gray-100 text-gray-800';
+                    }
+                    
+                    row.innerHTML = `
+                        <td class="py-4 px-6 text-sm font-medium text-gray-900">${horaire.heure_debut} - ${horaire.heure_fin}</td>
+                        <td class="py-4 px-6 text-sm ${currentShow.titre === horaire.titre ? 'font-medium text-primary' : 'text-gray-700'}">${horaire.titre}</td>
+                        <td class="py-4 px-6 text-sm text-gray-700">${horaire.animateur}</td>
+                        <td class="py-4 px-6 text-sm text-gray-700">
+                            <span class="${categoryColor} text-xs font-medium px-2.5 py-0.5 rounded-full">${horaire.categorie}</span>
+                        </td>
+                        <td class="py-4 px-6 text-sm text-gray-700">
+                            ${statusHtml}
+                        </td>
+                    `;
+                    
+                    scheduleBody.appendChild(row);
+                });
+                
+                if (scheduleBody.children.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="py-4 px-6 text-sm font-medium text-gray-900">00:00 - 24:00</td>
+                        <td class="py-4 px-6 text-sm font-medium text-primary">Musique</td>
+                        <td class="py-4 px-6 text-sm text-gray-700">Auto DJ</td>
+                        <td class="py-4 px-6 text-sm text-gray-700">
+                            <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Loisir</span>
+                        </td>
+                        <td class="py-4 px-6 text-sm text-gray-700">
+                            <span class="text-gray-500">En continu</span>
+                        </td>
+                    `;
+                    scheduleBody.appendChild(row);
+                }
+            }, (error) => {
+                document.getElementById('current-show-title').textContent = "Musique";
+                document.getElementById('current-show-host').textContent = "Avec Auto DJ";
+                document.getElementById('current-show-time').textContent = "00:00 - 24:00";
+                document.getElementById('next-show-title').textContent = "Aucun programme prévu";
+                document.getElementById('next-show-time').textContent = "";
+                document.getElementById('next-show-countdown').textContent = "--:--";
+            });
+            
+            function togglePlayPause() {
+                if (isPlaying) {
+                    audioPlayer.pause();
+                    playButton.innerHTML = '<i class="ri-play-fill ri-lg"></i>';
+                    audioWave.querySelectorAll('span').forEach(span => {
+                        span.style.animationPlayState = 'paused';
+                    });
+                    isPlaying = false;
+                } else {
+                    audioPlayer.play()
+                        .then(() => {
+                            playButton.innerHTML = '<i class="ri-pause-fill ri-lg"></i>';
+                            audioWave.querySelectorAll('span').forEach(span => {
+                                span.style.animationPlayState = 'running';
+                            });
+                            isPlaying = true;
+                        })
+                        .catch(error => {
+                            showToast("Erreur lors du démarrage de la lecture", false);
+                        });
+                }
+            }
+            
+            function updateVolume() {
+                const volume = volumeSlider.value / 100;
+                audioPlayer.volume = volume;
+                
+                const value = (volumeSlider.value - volumeSlider.min) / (volumeSlider.max - volumeSlider.min) * 100;
+                volumeSlider.style.backgroundImage = `linear-gradient(to right, #10b981 0%, #10b981 ${value}%, #e2e8f0 ${value}%, #e2e8f0 100%)`;
+            }
+            
+            playButton.addEventListener('click', togglePlayPause);
+            volumeSlider.addEventListener('input', updateVolume);
+            
+            audioPlayer.volume = volumeSlider.value / 100;
+            updateVolume();
+        });
+    </script>
+</body>
+</html>

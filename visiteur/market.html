@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace - Orjeun</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        primary: '#10B981', 
+                        secondary: '#047857',
+                        accent: '#F97316',
+                        background: '#f8f9fa'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    },
+                    fontFamily: {
+                        'sans': ['Poppins', 'sans-serif'],
+                        'display': ['Pacifico', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 1.5rem;
+            padding: 0 1rem;
+        }
+        @media (min-width: 640px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .product-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (min-width: 1280px) {
+            .product-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        .product-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .product-image {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+            background-color: #f1f5f9;
+        }
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+        .product-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #10B981;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .product-content {
+            padding: 1.25rem;
+        }
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #10B981;
+            margin-bottom: 0.5rem;
+        }
+        .product-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #64748B;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        .product-meta i {
+            color: #94a3b8;
+        }
+        .contact-btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #10B981;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        .contact-btn:hover {
+            background-color: #047857;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem 1rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            background: #F1F5F9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: #94a3b8;
+        }
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .filter-tag {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            background-color: #e2e8f0;
+            color: #334155;
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-tag.active {
+            background-color: #10B981;
+            color: white;
+        }
+        .sort-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-top: 1px solid #e2e8f0;
+        }
+        .results-count {
+            font-size: 0.875rem;
+            color: #64748B;
+        }
+        .sort-select {
+            background: transparent;
+            border: none;
+            font-size: 0.875rem;
+            color: #334155;
+            font-weight: 500;
+            padding-right: 1.5rem;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right center;
+            background-size: 16px;
+        }
+        .sort-select:focus {
+            outline: none;
+        }
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            padding: 0.5rem 0;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #64748B;
+            font-size: 0.75rem;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .tab-item.active {
+            color: #10B981;
+        }
+        .tab-icon {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #10B981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 50;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .content {
+            padding-top: 80px;
+            padding-bottom: 80px;
+        }
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #EF4444;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        .seller-group {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .seller-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .seller-name {
+            font-weight: 600;
+            margin-left: 0.75rem;
+        }
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .cart-item-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background-color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+        .cart-item-details {
+            flex: 1;
+        }
+        .cart-item-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        .cart-item-price {
+            color: #10B981;
+            font-weight: 600;
+        }
+        .cart-item-quantity {
+            display: flex;
+            align-items: center;
+            margin-top: 0.25rem;
+        }
+        .quantity-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .quantity-value {
+            margin: 0 0.5rem;
+            min-width: 20px;
+            text-align: center;
+        }
+        .remove-btn {
+            margin-left: 1rem;
+            color: #EF4444;
+            cursor: pointer;
+        }
+        .seller-total {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f5f9;
+            font-weight: 600;
+        }
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        .grand-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .login-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        .login-btn {
+            background-color: #10B981;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-top: 1.5rem;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        .login-btn:hover {
+            background-color: #047857;
+        }
+        .address-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+        .address-input:focus {
+            outline: none;
+            border-color: #10B981;
+        }
+        .vendeur-select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .product-price-range {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #10B981;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-background">
+  
+    <div id="toast" class="toast"></div>
+    
+   
+    <div id="app-content">
+        
+        <nav class="navbar">
+            <div class="container">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <span class="text-2xl font-display text-primary">Orjeun</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="relative mr-4">
+                            <button id="cart-icon" class="relative">
+                                <i class="ri-shopping-cart-line ri-xl text-gray-600"></i>
+                                <span id="cart-badge" class="cart-badge">0</span>
+                            </button>
+                        </div>
+                        <div class="bg-gray-100 rounded-full px-4 py-1">
+                            <span class="text-gray-700">Visiteur</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+       
+        <div class="content">
+            <div class="container">
+            
+                <div class="bg-white rounded-2xl shadow-sm p-4 mb-6">
+                  
+                    <div class="search-container">
+                        <div class="search-icon">
+                            <i class="ri-search-line ri-lg"></i>
+                        </div>
+                        <input 
+                            id="search-input" 
+                            type="text" 
+                            placeholder="Rechercher un produit..." 
+                            class="search-input"
+                        >
+                    </div>
+
+                  
+                    <div id="filter-buttons" class="filter-bar no-scrollbar">
+                    
+                    </div>
+
+      
+                    <div class="sort-container">
+                        <span id="products-count" class="results-count">0 produits trouvés</span>
+                        <select id="sort-select" class="sort-select">
+                            <option value="default">Trier par</option>
+                            <option value="price-asc">Prix croissant</option>
+                            <option value="price-desc">Prix décroissant</option>
+                            <option value="newest">Plus récents</option>
+                        </select>
+                    </div>
+                </div>
+
+             
+                <div id="product-grid" class="product-grid">
+              
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="tab-bar">
+            <a href="../login?redirect=dashboard" class="tab-item">
+                <i class="ri-home-5-line tab-icon"></i>
+                <span>Accueil</span>
+            </a>
+            <a href="forma" class="tab-item">
+                <i class="ri-book-open-line tab-icon"></i>
+                <span>Formations</span>
+            </a>
+            <a href="forum" class="tab-item">
+                <i class="ri-discuss-line tab-icon"></i>
+                <span>Forum</span>
+            </a>
+            <a href="radio" class="tab-item">
+                <i class="ri-radio-2-line tab-icon"></i>
+                <span>Radio</span>
+            </a>
+            <a href="#" class="tab-item active">
+                <i class="ri-shopping-bag-line tab-icon"></i>
+                <span>Boutique</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+      
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+            authDomain: "orjeun-9dec4.firebaseapp.com",
+            databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+            projectId: "orjeun-9dec4",
+            storageBucket: "orjeun-9dec4.appspot.com",
+            messagingSenderId: "979782321937",
+            appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+            measurementId: "G-G316HCYF9E"
+        };
+
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        document.addEventListener('DOMContentLoaded', function() {
+          
+            const filterButtonsContainer = document.getElementById('filter-buttons');
+            const productGrid = document.getElementById('product-grid');
+            const searchInput = document.getElementById('search-input');
+            const sortSelect = document.getElementById('sort-select');
+            const productsCountSpan = document.getElementById('products-count');
+            const toastElement = document.getElementById('toast');
+            const cartBadge = document.getElementById('cart-badge');
+            const cartIcon = document.getElementById('cart-icon');
+
+            
+            function showToast(message, duration = 3000) {
+                toastElement.textContent = message;
+                toastElement.classList.add('show');
+                
+                setTimeout(() => {
+                    toastElement.classList.remove('show');
+                }, duration);
+            }
+
+            function normalizeLocationName(location) {
+                return location
+                    .toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                    .replace(/[^a-z0-9\s]/g, '') 
+                    .trim();
+            }
+
+            function getFullLocationName(normalized) {               
+                let bestMatch = '';
+                for (const location in locationsMap) {
+                    const normalizedLocation = normalizeLocationName(location);
+                    if (normalizedLocation.includes(normalized) || normalized.includes(normalizedLocation)) {                   
+                        if (location.length > bestMatch.length) {
+                            bestMatch = location;
+                        }
+                    }
+                }
+                return bestMatch || normalized;
+            }
+
+            cartIcon.addEventListener('click', () => {
+                showToast('Veuillez vous inscrire pour accéder au panier');
+            });
+
+            productGrid.addEventListener('click', function(e) {
+                if (e.target.closest('.add-to-cart')) {
+                    showToast('Veuillez vous inscrire pour ajouter des produits au panier');
+                }
+            });
+
+            async function loadProducts() {
+                try {              
+                    const productsSnapshot = await database.ref('produits').once('value');
+                    if (productsSnapshot.exists()) {
+                        const productsData = productsSnapshot.val();
+                        
+                        productsIndex = {};
+                        Object.keys(productsData).forEach(key => {
+                            productsIndex[key] = productsData[key];
+                        });
+                    }
+
+                    const sellersSnapshot = await database.ref('produits_vendeurs').once('value');
+                    if (!sellersSnapshot.exists()) {
+                        renderNoProductsMessage();
+                        return;
+                    }
+                    
+                    const sellersData = sellersSnapshot.val();
+                    const productsArray = [];
+                    locationsMap = {}; 
+                    
+                    Object.keys(sellersData).forEach(key => {
+                        const item = sellersData[key];
+                        const productId = item.productId;
+                        const productData = productsIndex[productId] || {};
+                        
+                        const location = item.lieux || item.department || item.region || 'Lieu inconnu';
+                        
+                        if (!locationsMap[location]) {
+                            locationsMap[location] = true;
+                        }
+                        
+                        productsArray.push({
+                            id: key,
+                            productId: productId,
+                            name: item.productName || 'Produit sans nom',
+                            price: item.totalAmount || 0,
+                            quantity: item.quantity || 1,
+                            location: location,
+                            imageUrl: productData.imageUrl || null
+                        });
+                    });
+                    
+                    const grouped = {};
+                    productsArray.forEach(prod => {
+                        const key = `${prod.name}|${normalizeLocationName(prod.location)}`;
+                        if (!grouped[key]) {
+                            grouped[key] = [];
+                        }
+                        grouped[key].push(prod);
+                    });
+                    
+                    allProducts = Object.keys(grouped).map(key => {
+                        const [name, location] = key.split('|');
+                        return {
+                            name,
+                            location: getFullLocationName(location),
+                            sellers: grouped[key]
+                        };
+                    });
+                    
+                    filteredProducts = [...allProducts];
+                    
+                    renderFilterButtons();
+                    renderProducts();
+                    
+                } catch (err) {
+                    console.error('Erreur lors de la récupération des produits:', err);
+                    renderNoProductsMessage();
+                }
+            }
+
+            function renderNoProductsMessage() {
+                filterButtonsContainer.innerHTML = '';
+                productGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="ri-shopping-bag-line ri-2x"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">Aucun produit disponible</h3>
+                        <p class="text-gray-500">Revenez plus tard pour découvrir nos offres.</p>
+                    </div>
+                `;
+                productsCountSpan.textContent = '0 produit trouvé';
+            }
+
+            function renderFilterButtons() {         
+                const locations = new Set();
+                allProducts.forEach(group => {
+                    locations.add(group.location);
+                });
+                
+                const locationsArray = Array.from(locations);
+                
+                filterButtonsContainer.innerHTML = '';
+                const allBtn = document.createElement('button');
+                allBtn.textContent = 'Tous';
+                allBtn.className = 'filter-tag active';
+                allBtn.addEventListener('click', () => {
+                    activeLocation = 'Tous';
+                    updateFilterButtonsStyling();
+                    applyFilters();
+                });
+                filterButtonsContainer.appendChild(allBtn);
+
+                locationsArray.forEach(loc => {
+                    const btn = document.createElement('button');
+                    btn.textContent = loc;
+                    btn.className = 'filter-tag';
+                    btn.addEventListener('click', () => {
+                        activeLocation = loc;
+                        updateFilterButtonsStyling();
+                        applyFilters();
+                    });
+                    filterButtonsContainer.appendChild(btn);
+                });
+
+                updateFilterButtonsStyling();
+            }
+
+            function updateFilterButtonsStyling() {
+                Array.from(filterButtonsContainer.children).forEach(btn => {
+                    const loc = btn.textContent.trim();
+                    if (loc === activeLocation) {
+                        btn.classList.remove('bg-gray-100', 'text-gray-700');
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function applyFilters() {
+                if (activeLocation === 'Tous') {
+                    filteredProducts = [...allProducts];
+                } else {
+                    filteredProducts = allProducts.filter(group => 
+                        group.location === activeLocation
+                    );
+                }
+                
+                if (searchTerm) {
+                    filteredProducts = filteredProducts.filter(group => 
+                        group.name.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                }
+                
+                switch (currentSort) {
+                    case 'price-asc':
+                        filteredProducts.sort((a, b) => {
+                            const minPriceA = Math.min(...a.sellers.map(s => s.price));
+                            const minPriceB = Math.min(...b.sellers.map(s => s.price));
+                            return minPriceA - minPriceB;
+                        });
+                        break;
+                    case 'price-desc':
+                        filteredProducts.sort((a, b) => {
+                            const minPriceA = Math.min(...a.sellers.map(s => s.price));
+                            const minPriceB = Math.min(...b.sellers.map(s => s.price));
+                            return minPriceB - minPriceA;
+                        });
+                        break;
+                    case 'newest':
+                        break;
+                    default:
+                        break;
+                }
+                             
+                renderProducts();
+            }
+
+            function renderProducts() {
+                productGrid.innerHTML = '';
+                if (filteredProducts.length === 0) {
+                    productGrid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="ri-search-line ri-2x"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-2">Aucun résultat trouvé</h3>
+                            <p class="text-gray-500">Essayez de modifier vos filtres ou votre recherche.</p>
+                        </div>
+                    `;
+                    productsCountSpan.textContent = '0 produit trouvé';
+                    return;
+                }
+                
+                productsCountSpan.textContent = `${filteredProducts.length} produit${filteredProducts.length > 1 ? 's' : ''} trouvé${filteredProducts.length > 1 ? 's' : ''}`;
+                
+                filteredProducts.forEach(group => {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    
+                    const minPrice = Math.min(...group.sellers.map(s => s.price));
+                    const maxPrice = Math.max(...group.sellers.map(s => s.price));
+                    
+                    let productImage = null;
+                    for (const seller of group.sellers) {
+                        if (seller.imageUrl) {
+                            productImage = seller.imageUrl;
+                            break;
+                        }
+                    }
+                    
+                    let priceHTML = '';
+                    if (minPrice === maxPrice) {
+                        priceHTML = `<p class="product-price">${minPrice.toLocaleString('fr-FR')} HTG</p>`;
+                    } else {
+                        priceHTML = `<p class="product-price-range">${minPrice.toLocaleString('fr-FR')} - ${maxPrice.toLocaleString('fr-FR')} HTG</p>`;
+                    }
+                    
+                    card.innerHTML = `
+                        <div class="product-image">
+                            ${productImage 
+                                ? `<img src="${productImage}" alt="${group.name}" class="w-full h-full object-cover">` 
+                                : `<div class="w-full h-full flex items-center justify-center">
+                                    <i class="ri-shopping-bag-line ri-4x text-gray-300"></i>
+                                  </div>`
+                            }
+                        </div>
+                        <div class="product-content">
+                            <h3 class="product-title">${group.name}</h3>
+                            <div class="product-meta">
+                                <i class="ri-map-pin-line"></i>
+                                <span>${group.location}</span>
+                            </div>
+                            ${priceHTML}
+                            
+                            <button class="contact-btn add-to-cart" data-id="${group.sellers[0].id}" data-name="${group.name}" data-price="${minPrice}" data-image="${productImage || ''}" data-location="${group.location}">
+                                <i class="ri-shopping-cart-line ri-lg mr-2"></i> Ajouter au panier
+                            </button>
+                        </div>
+                    `;
+                    
+                    const addBtn = card.querySelector('.add-to-cart');
+                    addBtn.addEventListener('click', () => {
+                        showToast('Veuillez vous inscrire pour ajouter des produits au panier');
+                    });
+                    
+                    productGrid.appendChild(card);
+                });
+            }
+
+            searchInput.addEventListener('input', function() {
+                searchTerm = this.value.trim();
+                applyFilters();
+            });
+
+            sortSelect.addEventListener('change', function() {
+                currentSort = this.value;
+                applyFilters();
+            });
+            
+            // Variables globales
+            let allProducts = [];
+            let filteredProducts = [];
+            let activeLocation = 'Tous';
+            let searchTerm = '';
+            let currentSort = 'default';
+            let productsIndex = {}; 
+            let locationsMap = {};
+            
+            loadProducts();
+        });
+    </script>
+</body>
+</html>
