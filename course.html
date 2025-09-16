@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formation en ligne - ORJEUN</title>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4CAF50',
+            secondary: '#E8F5E9',
+            accent: '#4CAF50',
+            warning: '#FF9800',
+            danger: '#F44336'
+          },
+          borderRadius: {
+            'none': '0px',
+            'sm': '4px',
+            DEFAULT: '8px',
+            'md': '12px',
+            'lg': '16px',
+            'xl': '20px',
+            '2xl': '24px',
+            '3xl': '32px',
+            'full': '9999px',
+            'button': '8px'
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f9f9f9;
+      overflow-x: hidden;
+    }
+    .progress-bar {
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background-color: #4CAF50;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+    .quiz-container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-top: 20px;
+    }
+    .quiz-option {
+      padding: 12px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin: 8px 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .quiz-option:hover {
+      background-color: #f5f5f5;
+    }
+    .quiz-option.selected {
+      border-color: #4CAF50;
+      background-color: #E8F5E9;
+    }
+    .quiz-option.correct {
+      border-color: #4CAF50;
+      background-color: #e8f5e9;
+    }
+    .quiz-option.incorrect {
+      border-color: #f44336;
+      background-color: #ffebee;
+    }
+    .content-section {
+      transition: all 0.3s ease;
+    }
+    .quiz-header {
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      border-radius: 8px 8px 0 0;
+      padding: 15px 20px;
+      color: white;
+    }
+    .quiz-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .quiz-icon {
+      background-color: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .page-transition {
+      animation: slide 0.5s ease;
+    }
+    @keyframes slide {
+      from { transform: translateX(50px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .finish-reading-btn {
+      background-color: #4CAF50;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .finish-reading-btn:hover {
+      background-color: #388E3C;
+      transform: translateY(-2px);
+    }
+    .content-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .content-text {
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+    .content-image {
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 15px 0;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .content-link {
+      display: inline-flex;
+      align-items: center;
+      color: #4CAF50;
+      text-decoration: none;
+      font-weight: 500;
+      margin: 10px 0;
+    }
+    .content-link:hover {
+      text-decoration: underline;
+    }
+    .content-pdf {
+      height: 500px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #f5f5f5;
+    }
+    .navigation-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .nav-btn:hover {
+      background: #388E3C;
+      transform: translateY(-2px);
+    }
+    .nav-btn:disabled {
+      background: #C8E6C9;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .content-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      color: #4CAF50;
+    }
+    .content-type-icon {
+      font-size: 24px;
+    }
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      flex-direction: column;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #e0e0e0;
+      border-top: 5px solid #4CAF50;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .error-message {
+      background-color: #ffebee;
+      color: #f44336;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p class="mt-4 text-gray-700 font-medium">Chargement de la formation...</p>
+  </div>
+
+  <nav class="bg-white fixed top-0 left-0 w-full z-50 shadow px-4 py-3 flex justify-between items-center">
+    <a href="Forma.html" class="flex items-center text-primary">
+      <i class="ri-arrow-left-line mr-2"></i>
+      <span>Retour</span>
+    </a>
+    <h1 class="text-xl font-bold text-primary">ORJEUN</h1>
+    <div class="flex items-center gap-4">
+      <div id="userAvatar" class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">U</div>
+    </div>
+  </nav>
+
+  <main class="pt-16 pb-24 px-4">
+    <div id="errorMessage" class="error-message hidden">
+      <i class="ri-error-warning-line ri-xl mr-2"></i>
+      <span id="errorText"></span>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div class="flex justify-between items-center mb-3">
+        <h1 id="courseTitle" class="text-2xl font-bold text-gray-800">Chargement...</h1>
+        <span class="badge-completed certificate-badge hidden" id="completedBadge">Terminé</span>
+      </div>
+      <p id="courseDescription" class="text-gray-600 mb-4">Chargement de la description...</p>
+      
+      <div class="mb-2">
+        <div class="flex justify-between mb-1">
+          <span class="text-sm font-medium text-gray-700">Progression</span>
+          <span id="progressPercentage" class="text-sm font-medium text-primary">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2">
+        <div id="contentContainer" class="content-card">
+          <div class="text-center py-10">
+            <i class="ri-book-open-line text-4xl text-primary mb-4"></i>
+            <p class="text-lg font-medium">Sélectionnez un élément de contenu pour commencer</p>
+          </div>
+        </div>
+        
+        <div class="navigation-buttons">
+          <button id="prevBlockBtn" class="nav-btn" disabled>
+            <i class="ri-arrow-left-line"></i>
+            Précédent
+          </button>
+          <button id="nextBlockBtn" class="nav-btn">
+            Suivant
+            <i class="ri-arrow-right-line"></i>
+          </button>
+        </div>
+        
+        <div id="quizSection" class="hidden content-section">
+          <div class="quiz-header">
+            <div class="quiz-title">
+              <div class="quiz-icon">
+                <i class="ri-question-line"></i>
+              </div>
+              <h3 class="text-lg font-semibold">Question de validation</h3>
+            </div>
+          </div>
+          <div class="quiz-container">
+            <p id="quizQuestion" class="mb-4 font-medium"></p>
+            <div id="quizOptions" class="space-y-2">
+            </div>
+            <div class="mt-6 flex justify-end">
+              <button id="submitQuiz" class="bg-primary text-white px-4 py-2 rounded-button flex items-center">
+                <i class="ri-send-plane-line mr-2"></i>
+                Valider la réponse
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <h2 class="text-lg font-semibold mb-4">Détails de la formation</h2>
+          <div class="space-y-3">
+            <div class="flex items-center">
+              <div class="w-8 h-8 flex items-center justify-center text-primary mr-3">
+                <i class="ri-file-text-line"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Éléments de contenu</p>
+                <p id="contentCount" class="font-medium">0</p>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 flex items-center justify-center text-primary mr-3">
+                <i class="ri-question-line"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Quiz</p>
+                <p id="quizCount" class="font-medium">0 quiz</p>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 flex items-center justify-center text-primary mr-3">
+                <i class="ri-time-line"></i>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Temps estimé</p>
+                <p id="estimatedTime" class="font-medium">Calcul en cours...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-4">
+          <h2 class="text-lg font-semibold mb-4">Votre progression</h2>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between mb-1">
+                <span>Contenu terminé</span>
+                <span id="contentCompleted">0/0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div id="contentProgress" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1">
+                <span>Quiz complétés</span>
+                <span id="quizCompleted">0/0</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div id="quizProgress" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <div id="completionMessage" class="hidden bg-green-50 text-green-700 p-4 rounded-lg text-center">
+              <i class="ri-medal-fill text-2xl mb-2"></i>
+              <p class="font-semibold">Formation terminée avec succès!</p>
+              <p class="text-sm mt-1">Redirection vers votre certificat...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="fixed bottom-0 left-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)] px-2 py-2 grid grid-cols-5 gap-1">
+    <a href="dashboard" class="flex flex-col items-center justify-center text-gray-500">
+      <div class="w-6 h-6 flex items-center justify-center">
+        <i class="ri-home-5-fill ri-lg"></i>
+      </div>
+      <span class="text-xs mt-1">Accueil</span>
+    </a>
+    <a href="#" class="flex flex-col items-center justify-center text-primary">
+      <div class="w-6 h-6 flex items-center justify-center">
+        <i class="ri-book-open-line ri-lg"></i>
+      </div>
+      <span class="text-xs mt-1">Formations</span>
+    </a>
+    <a href="Forum" class="flex flex-col items-center justify-center text-gray-500">
+      <div class="w-6 h-6 flex items-center justify-center">
+        <i class="ri-discuss-line ri-lg"></i>
+      </div>
+      <span class="text-xs mt-1">Forum</span>
+    </a>
+    <a href="radio" class="flex flex-col items-center justify-center text-gray-500">
+      <div class="w-6 h-6 flex items-center justify-center">
+        <i class="ri-radio-2-line ri-lg"></i>
+      </div>
+      <span class="text-xs mt-1">Radio</span>
+    </a>
+    <a href="market" class="flex flex-col items-center justify-center text-gray-500">
+      <div class="w-6 h-6 flex items-center justify-center">
+        <i class="ri-shopping-bag-line ri-lg"></i>
+      </div>
+      <span class="text-xs mt-1">Boutique</span>
+    </a>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+      authDomain: "orjeun-9dec4.firebaseapp.com",
+      databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+      projectId: "orjeun-9dec4",
+      storageBucket: "orjeun-9dec4.appspot.com",
+      messagingSenderId: "979782321937",
+      appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+      measurementId: "G-G316HCYF9E"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    let currentBlockIndex = 0;
+    let currentFormationId = null;
+    let userData = null;
+    let currentFormation = null;
+    let currentQuiz = null;
+    let userProgress = {
+      completedBlocks: [],
+      quizCompleted: {},
+      completed: false,
+      progress: 0
+    };
+    
+    function getFormationIdFromUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('formationId');
+    }
+    
+    async function verifyUser() {
+      const email = localStorage.getItem('userEmail');
+      if (!email) {
+        window.location.href = 'login';
+        return null;
+      }
+    
+      const snapshot = await database.ref('membres').once('value');
+      if (snapshot.exists()) {
+        const users = snapshot.val();
+        for (const [userId, userData] of Object.entries(users)) {
+          if (userData.email === email) {
+            return { id: userId, ...userData };
+          }
+        }
+      }
+      localStorage.removeItem('userEmail');
+      window.location.href = 'login';
+      return null;
+    }
+    
+    function updateUserAvatar(user) {
+      if (user && user.nom) {
+        const initial = user.nom.charAt(0).toUpperCase();
+        document.getElementById('userAvatar').textContent = initial;
+      }
+    }
+    
+    function showError(message) {
+      const errorElement = document.getElementById('errorMessage');
+      const errorText = document.getElementById('errorText');
+      errorText.textContent = message;
+      errorElement.classList.remove('hidden');
+      document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+    
+    document.addEventListener('DOMContentLoaded', async function() {
+      document.getElementById('loadingOverlay').classList.remove('hidden');
+      currentFormationId = getFormationIdFromUrl();
+      if (!currentFormationId) {
+        showError('Aucune formation spécifiée. Vous serez redirigé vers la liste des formations.');
+        setTimeout(() => {
+          window.location.href = 'Forma';
+        }, 3000);
+        return;
+      }
+      
+      userData = await verifyUser();
+      if (!userData) return;
+      
+      try {
+        await fetchFormationData();
+        updateUserAvatar(userData);
+        renderFormationUI();
+        initEventListeners();
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        renderContentBlock(currentBlockIndex);
+      } catch (error) {
+        console.error('Erreur lors du chargement:', error);
+        showError('Erreur lors du chargement des données de la formation: ' + error.message);
+      }
+    });
+    
+    async function fetchFormationData() {
+      try {
+        const formationRef = database.ref(`formations/${currentFormationId}`);
+        const formationSnapshot = await formationRef.once('value');
+        currentFormation = formationSnapshot.val();
+        
+        if (!currentFormation) {
+          throw new Error('Aucune formation trouvée avec cet ID');
+        }
+        
+        sessionStorage.setItem('formationTitle', currentFormation.titre || currentFormation.description);
+        
+        const progressRef = database.ref(`membres/${userData.id}/Cours/${currentFormationId}`);
+        const progressSnapshot = await progressRef.once('value');
+        
+        if (progressSnapshot.exists()) {
+          userProgress = progressSnapshot.val();
+          currentBlockIndex = userProgress.currentBlock || 0;
+        } else {
+          userProgress = {
+            completedBlocks: [],
+            quizCompleted: {},
+            completed: false,
+            progress: 0,
+            currentBlock: 0,
+            titre: currentFormation.titre || currentFormation.description
+          };
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        throw error;
+      }
+    }
+    
+    async function saveUserProgress() {
+      try {
+        calculateEstimatedTime();
+        await database.ref(`membres/${userData.id}/Cours/${currentFormationId}`).set(userProgress);
+        
+        if (userProgress.completed) {
+          document.getElementById('completionMessage').classList.remove('hidden');
+          setTimeout(() => {
+            window.location.href = 'certificat';
+          }, 3000);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la sauvegarde:', error);
+        showError('Erreur lors de la sauvegarde de votre progression: ' + error.message);
+      }
+    }
+    
+    function renderFormationUI() {
+      document.getElementById('courseTitle').textContent = currentFormation.titre || "Formation sans titre";
+      document.getElementById('courseDescription').textContent = currentFormation.description || "Aucune description disponible";
+      
+      const contentCount = currentFormation.content ? currentFormation.content.length : 0;
+      document.getElementById('contentCount').textContent = `${contentCount} éléments`;
+      
+      let quizCount = 0;
+      if (currentFormation.content) {
+        currentFormation.content.forEach(block => {
+          if (block.type === 'quiz') quizCount++;
+        });
+      }
+      document.getElementById('quizCount').textContent = `${quizCount} quiz`;
+      
+      calculateEstimatedTime();
+      updateProgressUI();
+    }
+    
+    function calculateEstimatedTime() {
+      if (!currentFormation || !currentFormation.content) return;
+      
+      let totalMinutes = 0;
+      
+      currentFormation.content.forEach(block => {
+        switch(block.type) {
+          case 'text':
+            const wordCount = block.content.split(/\s+/).length;
+            totalMinutes += Math.max(1, Math.floor(wordCount / 200));
+            break;
+          case 'image':
+            totalMinutes += 1;
+            break;
+          case 'link':
+            totalMinutes += 2;
+            break;
+          case 'pdf':
+            totalMinutes += 5;
+            break;
+          case 'quiz':
+            totalMinutes += 3;
+            break;
+        }
+      });
+      
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      
+      let timeText = "";
+      if (hours > 0) {
+        timeText += `${hours} heure${hours > 1 ? 's' : ''} `;
+      }
+      if (minutes > 0) {
+        timeText += `${minutes} minute${minutes > 1 ? 's' : ''}`;
+      }
+      
+      document.getElementById('estimatedTime').textContent = timeText || "Moins de 5 minutes";
+    }
+    
+    function renderContentBlock(index) {
+      const contentContainer = document.getElementById('contentContainer');
+      const quizSection = document.getElementById('quizSection');
+      const nextBtn = document.getElementById('nextBlockBtn');
+      const prevBtn = document.getElementById('prevBlockBtn');
+      
+      quizSection.classList.add('hidden');
+      
+      if (!currentFormation.content || index >= currentFormation.content.length) {
+        contentContainer.innerHTML = '<div class="text-center py-10"><p class="text-lg font-medium">Fin de la formation</p></div>';
+        nextBtn.disabled = true;
+        return;
+      }
+      
+      const block = currentFormation.content[index];
+      let contentHTML = '';
+      
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = false;
+      
+      switch(block.type) {
+        case 'text':
+          contentHTML = `
+            <div class="content-title">
+              <i class="ri-file-text-line content-type-icon"></i>
+              <h3>Texte</h3>
+            </div>
+            <div class="content-text">${block.content}</div>
+          `;
+          break;
+          
+        case 'image':
+          contentHTML = `
+            <div class="content-title">
+              <i class="ri-image-line content-type-icon"></i>
+              <h3>Image</h3>
+            </div>
+            <img src="${block.content}" alt="Image du cours" class="content-image" onerror="this.src='https://via.placeholder.com/600x400?text=Image+non+disponible'">
+          `;
+          break;
+          
+        case 'link':
+          contentHTML = `
+            <div class="content-title">
+              <i class="ri-links-line content-type-icon"></i>
+              <h3>Lien</h3>
+            </div>
+            <p>${block.text || 'Cliquez sur le lien ci-dessous pour accéder à la ressource'}</p>
+            <a href="${block.url}" target="_blank" class="content-link">
+              <i class="ri-external-link-line mr-2"></i>
+              ${block.text || block.url}
+            </a>
+          `;
+          break;
+          
+        case 'pdf':
+          contentHTML = `
+            <div class="content-title">
+              <i class="ri-file-pdf-line content-type-icon"></i>
+              <h3>Document PDF</h3>
+            </div>
+            <a href="${block.url}" target="_blank" class="content-link">
+              <i class="ri-download-line mr-2"></i>
+              Télécharger le PDF: ${block.name || 'Document'}
+            </a>
+          `;
+          break;
+          
+        case 'quiz':
+          quizSection.classList.remove('hidden');
+          quizSection.classList.add('page-transition');
+          currentQuiz = block;
+          
+          document.getElementById('quizQuestion').textContent = block.question;
+          
+          const optionsContainer = document.getElementById('quizOptions');
+          optionsContainer.innerHTML = '';
+          
+          if (block.options && Array.isArray(block.options)) {
+            block.options.forEach((option, index) => {
+              const optionText = option.text || option;
+              const optionKey = index;
+              
+              const optionDiv = document.createElement('div');
+              optionDiv.className = 'quiz-option';
+              optionDiv.dataset.index = optionKey;
+              optionDiv.innerHTML = `
+                <div class="flex items-center">
+                  <div class="w-6 h-6 flex items-center justify-center mr-3 border rounded-full">
+                    ${String.fromCharCode(65 + index)}
+                  </div>
+                  <span>${optionText}</span>
+                </div>
+              `;
+              
+              optionDiv.addEventListener('click', () => {
+                document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+                optionDiv.classList.add('selected');
+              });
+              
+              optionsContainer.appendChild(optionDiv);
+            });
+          } else {
+            optionsContainer.innerHTML = '<p class="text-red-500">Erreur: les options du quiz ne sont pas disponibles</p>';
+          }
+          
+          contentHTML = `
+            <div class="text-center py-10">
+              <i class="ri-question-line text-4xl text-primary mb-4"></i>
+              <p class="text-lg font-medium">Quiz en cours...</p>
+              <p>Veuillez répondre au quiz pour continuer</p>
+            </div>
+          `;
+          break;
+          
+        default:
+          contentHTML = `<p class="text-center py-10">Type de contenu non pris en charge</p>`;
+      }
+      
+      contentContainer.innerHTML = contentHTML;
+      userProgress.currentBlock = index;
+      
+      if (block.type !== 'quiz' && !userProgress.completedBlocks.includes(index)) {
+        userProgress.completedBlocks.push(index);
+        calculateProgress();
+        updateProgressUI();
+        saveUserProgress();
+      }
+    }
+    
+    function handleQuizResponse(isCorrect) {
+      userProgress.quizCompleted[currentBlockIndex] = isCorrect;
+      
+      if (isCorrect) {
+        if (!userProgress.completedBlocks.includes(currentBlockIndex)) {
+          userProgress.completedBlocks.push(currentBlockIndex);
+        }
+        nextBlock();
+      } else {
+        const quizOptions = document.querySelectorAll('.quiz-option');
+        quizOptions.forEach((opt, index) => {
+          if (currentQuiz.options && 
+              currentQuiz.options[index] && 
+              currentQuiz.options[index].correct) {
+            opt.classList.add('correct');
+          }
+        });
+        
+        setTimeout(() => {
+          alert("Réponse incorrecte. Veuillez revoir le contenu précédent.");
+          goToBlock(currentBlockIndex - 1);
+        }, 1500);
+      }
+      
+      calculateProgress();
+      updateProgressUI();
+      saveUserProgress();
+    }
+    
+    function markBlockAsCompleted(index) {
+      if (!userProgress.completedBlocks.includes(index)) {
+        userProgress.completedBlocks.push(index);
+        calculateProgress();
+        updateProgressUI();
+        saveUserProgress();
+      }
+    }
+    
+    function calculateProgress() {
+      if (!currentFormation || !currentFormation.content) return;
+      
+      const totalBlocks = currentFormation.content.length;
+      if (totalBlocks > 0) {
+        const completedBlocks = userProgress.completedBlocks.length;
+        userProgress.progress = Math.round((completedBlocks / totalBlocks) * 100);
+        
+        if (userProgress.progress >= 100) {
+          userProgress.completed = true;
+        }
+      }
+    }
+    
+    function updateProgressUI() {
+      document.getElementById('progressFill').style.width = `${userProgress.progress}%`;
+      document.getElementById('progressPercentage').textContent = `${userProgress.progress}%`;
+      
+      const completedBadge = document.getElementById('completedBadge');
+      if (userProgress.completed) {
+        completedBadge.classList.remove('hidden');
+      } else {
+        completedBadge.classList.add('hidden');
+      }
+      
+      const totalBlocks = currentFormation.content ? currentFormation.content.length : 0;
+      const blocksCompleted = userProgress.completedBlocks.length;
+      document.getElementById('contentCompleted').textContent = `${blocksCompleted}/${totalBlocks}`;
+      document.getElementById('contentProgress').style.width = totalBlocks > 0 ? `${(blocksCompleted / totalBlocks) * 100}%` : '0%';
+      
+      let quizCompleted = 0;
+      if (currentFormation.content) {
+        currentFormation.content.forEach((block, index) => {
+          if (block.type === 'quiz' && userProgress.quizCompleted[index]) {
+            quizCompleted++;
+          }
+        });
+      }
+      const totalQuiz = currentFormation.content ? 
+        currentFormation.content.filter(block => block.type === 'quiz').length : 0;
+      document.getElementById('quizCompleted').textContent = `${quizCompleted}/${totalQuiz}`;
+      document.getElementById('quizProgress').style.width = totalQuiz > 0 ? `${(quizCompleted / totalQuiz) * 100}%` : '0%';
+    }
+    
+    function nextBlock() {
+      if (currentBlockIndex < (currentFormation.content?.length || 0) - 1) {
+        currentBlockIndex++;
+        renderContentBlock(currentBlockIndex);
+      } else {
+        userProgress.completed = true;
+        saveUserProgress();
+      }
+    }
+    
+    function prevBlock() {
+      if (currentBlockIndex > 0) {
+        currentBlockIndex--;
+        renderContentBlock(currentBlockIndex);
+      }
+    }
+    
+    function goToBlock(index) {
+      if (index >= 0 && index < (currentFormation.content?.length || 0)) {
+        currentBlockIndex = index;
+        renderContentBlock(currentBlockIndex);
+      }
+    }
+    
+    function initEventListeners() {
+      document.getElementById('prevBlockBtn').addEventListener('click', prevBlock);
+      document.getElementById('nextBlockBtn').addEventListener('click', nextBlock);
+      
+      document.getElementById('submitQuiz').addEventListener('click', () => {
+        const selectedOption = document.querySelector('.quiz-option.selected');
+        if (!selectedOption) {
+          alert("Veuillez sélectionner une réponse");
+          return;
+        }
+        
+        const selectedIndex = parseInt(selectedOption.dataset.index);
+        let isCorrect = false;
+        
+        if (currentQuiz && Array.isArray(currentQuiz.options)) {
+          if (currentQuiz.options[selectedIndex] && 
+              currentQuiz.options[selectedIndex].correct) {
+            isCorrect = true;
+          }
+        }
+        
+        if (isCorrect) {
+          selectedOption.classList.add('correct');
+        } else {
+          selectedOption.classList.add('incorrect');
+          
+          const quizOptions = document.querySelectorAll('.quiz-option');
+          quizOptions.forEach((opt, index) => {
+            if (currentQuiz.options && 
+                currentQuiz.options[index] && 
+                currentQuiz.options[index].correct) {
+              opt.classList.add('correct');
+            }
+          });
+        }
+        
+        setTimeout(() => {
+          handleQuizResponse(isCorrect);
+        }, 1500);
+      });
+    }
+  </script>
+</body>
+</html>

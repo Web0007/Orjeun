@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formations</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:'#10B981',secondary:'#D1FAE5'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+font-family: 'Poppins', sans-serif;
+background-color: #f9f9f9;
+}
+.card-animation {
+transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-animation:hover {
+transform: translateY(-5px);
+box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.participate-btn:active {
+transform: scale(0.98);
+}
+.badge-online {
+background-color: #d1fae5;
+color: #047857;
+padding: 3px 8px;
+border-radius: 12px;
+font-size: 0.75rem;
+font-weight: 500;
+}
+.badge-professional {
+background-color: #d1fae5;
+color: #047857;
+padding: 3px 8px;
+border-radius: 12px;
+font-size: 0.75rem;
+font-weight: 500;
+}
+.detail-item {
+display: flex;
+align-items: center;
+margin-top: 4px;
+}
+.detail-item i {
+margin-right: 8px;
+color: #10B981;
+}
+.progress-bar {
+height: 6px;
+background-color: #e0e0e0;
+border-radius: 3px;
+overflow: hidden;
+margin-top: 8px;
+}
+.progress-fill {
+height: 100%;
+background-color: #10B981;
+border-radius: 3px;
+transition: width 0.5s ease;
+}
+.progress-text {
+font-size: 0.75rem;
+color: #666;
+text-align: right;
+margin-top: 2px;
+}
+.download-confirmation {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0,0,0,0.5);
+z-index: 100;
+display: none;
+justify-content: center;
+align-items: center;
+}
+.confirmation-box {
+background: white;
+border-radius: 16px;
+padding: 25px;
+max-width: 350px;
+text-align: center;
+box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+.confirmation-box h3 {
+font-weight: 600;
+font-size: 1.2rem;
+margin-bottom: 15px;
+}
+.confirmation-buttons {
+display: flex;
+gap: 12px;
+margin-top: 20px;
+}
+.confirmation-buttons button {
+flex: 1;
+padding: 10px;
+border-radius: 8px;
+font-weight: 500;
+cursor: pointer;
+transition: all 0.2s;
+}
+.confirm-btn {
+background: #10B981;
+color: white;
+border: none;
+}
+.cancel-btn {
+background: #f1f1f1;
+color: #555;
+border: 1px solid #ddd;
+}
+.file-info {
+background-color: #d1fae5;
+border-radius: 8px;
+padding: 12px;
+margin-top: 10px;
+font-size: 0.85rem;
+}
+.file-info strong {
+display: block;
+margin-bottom: 5px;
+}
+.download-link {
+display: inline-block;
+margin-top: 8px;
+color: #10B981;
+text-decoration: underline;
+}
+.instructions {
+text-align: left;
+margin: 15px 0;
+padding-left: 20px;
+}
+.instructions li {
+margin-bottom: 8px;
+}
+.action-buttons {
+display: flex;
+gap: 8px;
+justify-content: flex-end;
+}
+</style>
+</head>
+<body class="bg-white">
+<nav class="bg-white fixed top-0 left-0 w-full z-50 shadow px-4 py-3 flex justify-between items-center">
+    <img src="img.png" alt="Logo Orjeun" class="h-8">
+    <div class="flex items-center gap-4">
+      <button id="logoutButton" class="text-gray-500 hover:text-primary transition-colors">
+        <i class="ri-logout-box-r-line text-lg"></i>
+      </button>
+      <div id="userAvatar" class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm">?</div>
+    </div>
+  </nav>
+
+<main class="pt-16 pb-20 px-4">
+<div class="mt-4 mb-6">
+<h2 class="text-2xl font-semibold">Formations</h2>
+<p class="text-gray-600 mt-1">Découvrez nos formations professionnelles et en ligne</p>
+</div>
+
+<div class="relative mb-6">
+<input type="text" id="searchInput" placeholder="Rechercher une formation..." class="w-full py-3 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+<div class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400">
+<i class="ri-search-line"></i>
+</div>
+</div>
+
+<div id="loadingState" class="flex flex-col items-center justify-center py-10">
+<div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+<p class="mt-4 text-gray-600">Chargement des formations...</p>
+</div>
+
+<div id="errorState" class="hidden flex flex-col items-center justify-center py-10 text-center">
+<div class="w-16 h-16 flex items-center justify-center text-red-500 mb-4">
+<i class="ri-error-warning-line ri-3x"></i>
+</div>
+<h3 class="text-lg font-medium text-gray-900">Impossible de charger les formations</h3>
+<p class="mt-2 text-gray-600">Veuillez vérifier votre connexion et réessayer</p>
+<button id="retryButton" class="mt-4 px-4 py-2 bg-primary text-white rounded-button cursor-pointer">
+Réessayer
+</button>
+</div>
+
+<div id="formationsList" class="hidden space-y-6"></div>
+</main>
+
+<div class="fixed bottom-0 left-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)] px-2 py-2 grid grid-cols-5 gap-1">
+    <a href="dashboard" class="flex flex-col items-center justify-center text-gray-500">
+        <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ri-home-5-fill ri-lg"></i>
+        </div>
+        <span class="text-xs mt-1">Accueil</span>
+    </a>
+    <a href="#" class="flex flex-col items-center justify-center text-primary">
+        <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ri-book-open-line ri-lg"></i>
+        </div>
+        <span class="text-xs mt-1">Formations</span>
+    </a>
+    <a href="Forum" class="flex flex-col items-center justify-center text-gray-500">
+        <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ri-discuss-line ri-lg"></i>
+        </div>
+        <span class="text-xs mt-1">Forum</span>
+    </a>
+    <a href="radio" class="flex flex-col items-center justify-center text-gray-500">
+        <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ri-radio-2-line ri-lg"></i>
+        </div>
+        <span class="text-xs mt-1">Radio</span>
+    </a>
+    <a href="market" class="flex flex-col items-center justify-center text-gray-500">
+        <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ri-shopping-bag-line ri-lg"></i>
+        </div>
+        <span class="text-xs mt-1">Boutique</span>
+    </a>
+</div>
+
+<template id="formationCardTemplate">
+<div class="formation-card bg-white rounded-lg shadow-md overflow-hidden card-animation">
+<div class="p-4">
+<div class="flex justify-between items-start">
+  <h3 class="formation-title text-lg font-semibold"></h3>
+  <span class="formation-type-badge"></span>
+</div>
+
+<div class="formation-details mt-3">
+  <div class="professional-details hidden">
+    <div class="detail-item">
+      <i class="ri-map-pin-line"></i>
+      <span class="formation-lieu"></span>
+    </div>
+    <div class="detail-item">
+      <i class="ri-calendar-line"></i>
+      <span class="formation-date"></span>
+    </div>
+    <div class="detail-item">
+      <i class="ri-time-line"></i>
+      <span class="formation-heure"></span>
+    </div>
+  </div>
+  
+  <div class="online-details hidden">
+    <div class="detail-item">
+      <i class="ri-computer-line"></i>
+      <span>Formation en ligne</span>
+    </div>
+    
+    <div class="detail-item">
+      <i class="ri-stack-line"></i>
+      <span class="formation-content-count"></span>
+    </div>
+    
+    <div class="detail-item">
+      <i class="ri-question-line"></i>
+      <span class="formation-quiz-count"></span>
+    </div>
+    
+    <div class="progress-container mt-3 hidden">
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 0%"></div>
+      </div>
+      <div class="progress-text">0% complété</div>
+    </div>
+  </div>
+</div>
+
+<p class="formation-description mt-3 text-gray-700 text-sm"></p>
+
+<div class="mt-4 action-buttons">
+  <button class="participate-btn bg-primary text-white px-4 py-2 rounded-button flex items-center cursor-pointer">
+    <div class="w-4 h-4 flex items-center justify-center mr-1">
+      <i class="formation-btn-icon"></i>
+    </div>
+    <span class="formation-btn-text"></span>
+  </button>
+</div>
+</div>
+</div>
+</template>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, get, child, set, update, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+  authDomain: "orjeun-9dec4.firebaseapp.com",
+  databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+  projectId: "orjeun-9dec4",
+  storageBucket: "orjeun-9dec4.appspot.com",
+  messagingSenderId: "979782321937",
+  appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+  measurementId: "G-G316HCYF9E"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+async function verifyUser() {
+  const email = localStorage.getItem('userEmail');
+  if (!email) {
+    window.location.href = 'login';
+    return null;
+  }
+
+  const snapshot = await get(child(ref(database), 'membres')).then((snapshot) => {
+    if (snapshot.exists()) {
+      const users = snapshot.val();
+      for (const [userId, userData] of Object.entries(users)) {
+        if (userData.email === email) {
+          return { id: userId, ...userData };
+        }
+      }
+    }
+    return null;
+  });
+
+  if (!snapshot) {
+    localStorage.removeItem('userEmail');
+    window.location.href = 'login';
+    return null;
+  }
+  return snapshot;
+}
+
+function updateUserUI(user) {
+  if (user && user.nom) {
+    const initial = user.nom.charAt(0).toUpperCase();
+    document.getElementById('userAvatar').textContent = initial;
+  }
+}
+
+async function addCourseToUser(userId, courseId, courseTitle) {
+  const courseRef = ref(database, `membres/${userId}/cours/${courseId}`);
+  const snapshot = await get(courseRef);
+  
+  if (!snapshot.exists()) {
+    await set(courseRef, { 
+      addedAt: Date.now(),
+      titre: courseTitle,
+      progress: 0,
+      completed: false,
+      lastAccessed: Date.now()
+    });
+    return true;
+  }
+  return false;
+}
+
+async function updateCourseProgress(userId, courseId, progress) {
+  const courseRef = ref(database, `membres/${userId}/cours/${courseId}`);
+  await update(courseRef, { 
+    progress: progress,
+    lastAccessed: Date.now()
+  });
+}
+
+async function getCourseProgress(userId, courseId) {
+  const courseRef = ref(database, `membres/${userId}/cours/${courseId}`);
+  const snapshot = await get(courseRef);
+  
+  if (snapshot.exists()) {
+    return snapshot.val().progress || 0;
+  }
+  return 0;
+}
+
+async function addRecentCourse(userId, courseTitle) {
+  try {
+    const recentCoursesRef = ref(database, `membres/${userId}/cours_recent`);
+    const snapshot = await get(recentCoursesRef);
+    
+    const newCourseRef = push(recentCoursesRef);
+    await set(newCourseRef, {
+      titre: courseTitle,
+      timestamp: Date.now()
+    });
+    
+    if (snapshot.exists()) {
+      let recentCourses = snapshot.val();
+      const entries = Object.entries(recentCourses);
+      
+      if (entries.length >= 4) {
+        const sorted = entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+        const toDelete = sorted.slice(0, sorted.length - 3);
+        
+        for (const [key] of toDelete) {
+          const deleteRef = ref(database, `membres/${userId}/cours_recent/${key}`);
+          await remove(deleteRef);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du cours récent:", error);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  const user = await verifyUser();
+  if (!user) return;
+  updateUserUI(user);
+
+  let originalFormations = [];
+  
+  const loadFormations = async () => {
+    try {
+      const snapshot = await get(ref(database, 'formations'));
+      document.getElementById('loadingState').classList.add('hidden');
+      
+      if (snapshot.exists()) {
+        const formationsData = snapshot.val();
+        originalFormations = Object.entries(formationsData).map(([id, formation]) => ({ id, ...formation }));
+        await renderFormations(originalFormations, user.id);
+        document.getElementById('formationsList').classList.remove('hidden');
+      } else {
+        showEmptyState();
+      }
+    } catch (error) {
+      console.error("Erreur de chargement:", error);
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('errorState').classList.remove('hidden');
+    }
+  };
+
+  const showEmptyState = () => {
+    document.getElementById('formationsList').innerHTML = `
+      <div class="text-center py-10">
+        <div class="w-16 h-16 mx-auto flex items-center justify-center text-gray-400">
+          <i class="ri-inbox-line ri-3x"></i>
+        </div>
+        <h3 class="mt-4 text-lg font-medium">Aucune formation programmée</h3>
+        <p class="mt-2 text-sm text-gray-600">Revenez plus tard pour de nouvelles formations</p>
+      </div>`;
+  };
+
+  const renderFormations = async (formations, userId) => {
+    const listElement = document.getElementById('formationsList');
+    listElement.innerHTML = '';
+
+    for (const formation of formations) {
+      const template = document.getElementById('formationCardTemplate');
+      const clone = document.importNode(template.content, true);
+
+      clone.querySelector('.formation-title').textContent = formation.titre;
+      clone.querySelector('.formation-description').textContent = formation.description;
+      
+      const isOnline = formation.type === 'online';
+      const badgeElement = clone.querySelector('.formation-type-badge');
+      
+      if (isOnline) {
+        badgeElement.textContent = 'En ligne';
+        badgeElement.classList.add('badge-online');
+        
+        const onlineDetails = clone.querySelector('.online-details');
+        onlineDetails.classList.remove('hidden');
+        
+        let contentCount = 0;
+        let quizCount = 0;
+        
+        if (formation.content && Array.isArray(formation.content)) {
+          contentCount = formation.content.length;
+          
+          formation.content.forEach(block => {
+            if (block.type === 'quiz') quizCount++;
+          });
+        }
+        
+        clone.querySelector('.formation-content-count').textContent = `${contentCount} blocs de contenu`;
+        clone.querySelector('.formation-quiz-count').textContent = `${quizCount} quiz`;
+        
+        const progress = await getCourseProgress(userId, formation.id);
+        const progressContainer = clone.querySelector('.progress-container');
+        const progressFill = clone.querySelector('.progress-fill');
+        const progressText = clone.querySelector('.progress-text');
+        
+        if (progress > 0) {
+          progressContainer.classList.remove('hidden');
+          progressFill.style.width = `${progress}%`;
+          progressText.textContent = `${progress}% complété`;
+        }
+      } else {
+        badgeElement.textContent = 'Professionnelle';
+        badgeElement.classList.add('badge-professional');
+        
+        const professionalDetails = clone.querySelector('.professional-details');
+        professionalDetails.classList.remove('hidden');
+        
+        clone.querySelector('.formation-lieu').textContent = formation.lieu || 'Non spécifié';
+        clone.querySelector('.formation-date').textContent = formation.date ? 
+          new Date(formation.date).toLocaleDateString('fr-FR') : 'Date non définie';
+        clone.querySelector('.formation-heure').textContent = formation.heure ? 
+          `À ${formation.heure}` : 'Heure non définie';
+      }
+
+      const actionBtn = clone.querySelector('.participate-btn');
+      const actionBtnIcon = clone.querySelector('.formation-btn-icon');
+      const actionBtnText = clone.querySelector('.formation-btn-text');
+      
+      if (isOnline) {
+        actionBtnText.textContent = 'Commencer';
+        actionBtnIcon.className = 'ri-play-circle-line';
+      } else {
+        actionBtnText.textContent = 'Contacter';
+        actionBtnIcon.className = 'ri-whatsapp-line';
+      }
+
+      if (formation.annulee) {
+        const badge = document.createElement('div');
+        badge.className = 'mt-2 bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium';
+        badge.textContent = 'Annulée';
+        clone.querySelector('.p-4').appendChild(badge);
+        actionBtn.disabled = true;
+        actionBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+
+      actionBtn.addEventListener('click', async (e) => {
+        try {
+          const currentUser = await verifyUser();
+          if (!currentUser) return;
+
+          await addRecentCourse(currentUser.id, formation.titre);
+
+          localStorage.setItem('currentFormationTitle', formation.titre);
+
+          if (isOnline) {
+            await addCourseToUser(currentUser.id, formation.id, formation.titre);
+            window.location.href = `course.html?formationId=${formation.id}`;
+          } else {
+            await addCourseToUser(currentUser.id, formation.id, formation.titre);
+            const message = encodeURIComponent(
+              `Bonjour, je suis intéressé par la formation "${formation.titre}" prévue le ${formation.date} à ${formation.heure}.`
+            );
+            window.open(`https://wa.me/50942710675?text=${message}`, '_blank');
+          }
+        } catch (error) {
+          console.error("Erreur:", error);
+        }
+      });
+
+      listElement.appendChild(clone);
+    }
+  };
+
+  document.getElementById('searchInput').addEventListener('input', async (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const filtered = originalFormations.filter(f =>
+      f.titre.toLowerCase().includes(searchTerm) ||
+      f.description?.toLowerCase().includes(searchTerm) ||
+      (f.lieu && f.lieu.toLowerCase().includes(searchTerm))
+    );
+    await renderFormations(filtered, user.id);
+  });
+
+  document.getElementById('logoutButton').addEventListener('click', () => {
+    localStorage.removeItem('userEmail');
+    window.location.href = 'login';
+  });
+
+  document.getElementById('retryButton').addEventListener('click', loadFormations);
+
+  loadFormations();
+});
+</script>
+</body>
+</html>

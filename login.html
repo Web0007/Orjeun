@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orjeun - Connexion</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F46E5',
+            secondary: '#10B981'
+          },
+          borderRadius: {
+            'button': '8px'
+          },
+          keyframes: {
+            slideFade: {
+              '0%': { opacity: '0', transform: 'translateY(-10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            }
+          },
+          animation: {
+            slideFade: 'slideFade 0.5s ease-out'
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f9fafb;
+      font-family: 'Inter', sans-serif;
+    }
+    .form-container { transition: all 0.3s ease; }
+    .tab-indicator { transition: transform 0.3s ease; }
+    .password-strength { height: 4px; transition: width 0.3s ease; }
+    .auth-card { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+    .logged-in-container {
+      animation: slideFade 0.5s ease-out;
+    }
+    .hidden-field {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .visible-field {
+      max-height: 500px;
+      opacity: 1;
+      transition: all 0.3s ease;
+    }
+    .password-container {
+      position: relative;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #6b7280;
+      background: none;
+      border: none;
+      outline: none;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col">
+<div class="w-full h-full flex flex-col items-center justify-center px-4 py-12">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <h1 class="font-['Pacifico'] text-3xl text-primary">Orjeun</h1>
+      <p class="text-gray-500 mt-2">Bienvenue sur votre plateforme</p>
+      
+      <!-- Message de téléchargement ajouté ici -->
+      <p class="text-gray-600 mt-3">
+        Si vous n'avez pas encore téléchargé l'appli, veuillez 
+        <a href="Orjeun.apk" class="text-primary font-medium hover:underline">cliquer ici</a>, 
+        et le téléchargement débutera instantanément.
+      </p>
+    </div>
+    
+    <div id="logged-in-container" class="hidden auth-card bg-white rounded-lg shadow-md p-6">
+      <div class="text-center">
+        <div class="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
+          <i class="ri-user-3-fill text-primary text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-800">Vous êtes déjà connecté</h3>
+        <p class="text-gray-600 mt-2">Souhaitez-vous vous déconnecter ou accéder à votre tableau de bord ?</p>
+        
+        <div class="mt-6 flex flex-col sm:flex-row gap-3">
+          <button id="go-to-dashboard" class="flex-1 bg-primary hover:bg-primary-700 text-white py-2.5 rounded-button transition">
+            Tableau de bord
+          </button>
+          <button id="logout-btn" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2.5 rounded-button transition">
+            Déconnexion
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    
+    <div id="auth-container" class="auth-card bg-white rounded-lg shadow-md p-6">
+      <div class="relative mb-8">
+        <div class="flex">
+          <button id="login-tab" class="flex-1 py-3 text-center font-medium cursor-pointer relative z-10 text-primary" onclick="switchTab('login')">Connexion</button>
+          <button id="signup-tab" class="flex-1 py-3 text-center font-medium cursor-pointer relative z-10 text-gray-500" onclick="switchTab('signup')">Inscription</button>
+        </div>
+        <div class="tab-indicator absolute bottom-0 left-0 h-0.5 w-1/2 bg-primary"></div>
+      </div>
+      
+     
+      <div id="login-form" class="form-container">
+        <form id="login-form-element" class="space-y-5">
+          <div>
+            <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" id="login-email" class="w-full h-10 pl-3 border border-gray-300 rounded-button focus:ring-2 focus:ring-primary focus:border-primary" required>
+          </div>
+          <div class="password-container">
+            <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+            <div class="relative">
+              <input type="password" id="login-password" class="w-full h-10 pl-3 pr-10 border border-gray-300 rounded-button focus:ring-2 focus:ring-primary focus:border-primary" required>
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('login-password', 'login-eye-icon')">
+                <i id="login-eye-icon" class="ri-eye-off-line"></i>
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <label class="flex items-center text-sm text-gray-700">
+              <input type="checkbox" class="mr-2" id="remember-me"> Se souvenir de moi
+            </label>          
+          </div>
+          <button type="submit" class="w-full bg-primary hover:bg-primary-700 text-white py-2.5 rounded-button transition">Se connecter</button>
+        </form>
+        <div id="login-error" class="mt-4 text-red-500 text-sm hidden animate-slideFade"></div>
+        <div id="login-success" class="mt-4 text-green-500 text-sm hidden animate-slideFade"></div>
+      </div>
+      
+    
+      <div id="signup-form" class="form-container hidden">
+        <form id="signup-form-element" class="space-y-5">
+          <div>
+            <label for="signup-name" class="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
+            <input type="text" id="signup-name" class="w-full h-10 pl-3 border border-gray-300 rounded-button focus:ring-2 focus:ring-primary focus:border-primary" required>
+          </div>
+          
+          <div>
+            <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">Numéro de téléphone</label>
+            <div class="relative">
+              <input type="tel" id="telephone" name="telephone" required 
+                     class="w-full px-4 pl-10 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                     placeholder="exemple: +50944358909"
+                     pattern="[0-9]{10}" 
+                     title="Entrez un numéro de téléphone à 10 chiffres">
+              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <i class="ri-phone-line ri-lg text-gray-500"></i>
+              </div>
+            </div>                   
+          </div>
+          
+          <div>
+            <label for="departement" class="block text-sm font-medium text-gray-700 mb-1">Département</label>
+            <div class="relative">
+              <select id="departement" name="departement" required 
+                      class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
+                <option value="" disabled selected>Chargement...</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                <i class="ri-arrow-down-s-line ri-lg text-gray-500"></i>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label for="commune" class="block text-sm font-medium text-gray-700 mb-1">Commune</label>
+            <div class="relative">
+              <select id="commune" name="commune" required 
+                      class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none">
+                <option value="" disabled selected>Sélectionnez d'abord un département</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                <i class="ri-arrow-down-s-line ri-lg text-gray-500"></i>
+              </div>
+            </div>
+          </div>
+
+          <div id="nouvelleCommuneField" class="hidden-field">
+            <div class="form-group mb-4">
+              <label for="nouvelleCommune" class="block text-sm font-medium text-gray-700 mb-1">Nom de votre commune</label>
+              <input type="text" id="nouvelleCommune" name="nouvelleCommune" 
+                     class="w-full px-4 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                     pattern="[A-Za-zÀ-ÿ\s\-']{2,}" 
+                     title="Le nom de la commune doit contenir au moins 2 caractères">
+            </div>
+          </div>
+          
+          <div>
+            <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" id="signup-email" class="w-full h-10 pl-3 border border-gray-300 rounded-button focus:ring-2 focus:ring-primary focus:border-primary" required>
+          </div>
+          <div class="password-container">
+            <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+            <div class="relative">
+              <input type="password" id="signup-password" class="w-full h-10 pl-3 pr-10 border border-gray-300 rounded-button focus:ring-2 focus:ring-primary focus:border-primary" required>
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('signup-password', 'signup-eye-icon')">
+                <i id="signup-eye-icon" class="ri-eye-off-line"></i>
+              </button>
+            </div>
+            <div class="mt-2">
+              <div class="flex justify-between text-xs text-gray-500">
+                <span>Force du mot de passe:</span>
+                <span id="password-strength-text">Faible</span>
+              </div>
+              <div class="h-1 w-full bg-gray-200 rounded-full mt-1">
+                <div id="password-strength-indicator" class="password-strength h-full bg-red-500 rounded-full" style="width: 33%"></div>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-primary hover:bg-primary-700 text-white py-2.5 rounded-button transition">S'inscrire</button>
+        </form>
+        <div id="signup-error" class="mt-4 text-red-500 text-sm hidden animate-slideFade"></div>
+        <div id="signup-success" class="mt-4 text-green-500 text-sm hidden animate-slideFade"></div>
+      </div>
+    </div>    
+  </div>
+</div>
+
+
+<div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white p-5 rounded-lg flex flex-col items-center">
+    <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+    <p class="mt-3 text-gray-700">Chargement en cours...</p>
+  </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+    authDomain: "orjeun-9dec4.firebaseapp.com",
+    projectId: "orjeun-9dec4",
+    storageBucket: "orjeun-9dec4.appspot.com",
+    messagingSenderId: "979782321937",
+    appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+    measurementId: "G-G316HCYF9E"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const loginTab = document.getElementById('login-tab');
+  const signupTab = document.getElementById('signup-tab');
+  const tabIndicator = document.querySelector('.tab-indicator');
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const loginFormElement = document.getElementById('login-form-element');
+  const signupFormElement = document.getElementById('signup-form-element');
+  const passwordStrengthIndicator = document.getElementById('password-strength-indicator');
+  const passwordStrengthText = document.getElementById('password-strength-text');
+  const loadingOverlay = document.getElementById('loading-overlay');
+  const loginError = document.getElementById('login-error');
+  const loginSuccess = document.getElementById('login-success');
+  const signupError = document.getElementById('signup-error');
+  const signupSuccess = document.getElementById('signup-success');
+  const authContainer = document.getElementById('auth-container');
+  const loggedInContainer = document.getElementById('logged-in-container');
+  const logoutBtn = document.getElementById('logout-btn');
+  const goToDashboardBtn = document.getElementById('go-to-dashboard');
+
+  const departementSelect = document.getElementById('departement');
+  const communeSelect = document.getElementById('commune');
+  const nouvelleCommuneField = document.getElementById('nouvelleCommuneField');
+  const nouvelleCommuneInput = document.getElementById('nouvelleCommune');
+  const telephoneInput = document.getElementById('telephone');
+
+  function togglePasswordVisibility(inputId, iconId) {
+    const passwordInput = document.getElementById(inputId);
+    const eyeIcon = document.getElementById(iconId);
+    
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      eyeIcon.classList.remove('ri-eye-off-line');
+      eyeIcon.classList.add('ri-eye-line');
+    } else {
+      passwordInput.type = 'password';
+      eyeIcon.classList.remove('ri-eye-line');
+      eyeIcon.classList.add('ri-eye-off-line');
+    }
+  }
+
+  function checkLoginState() {
+    const userEmail = localStorage.getItem('userEmail');
+    if (userEmail) {
+      authContainer.classList.add('hidden');
+      loggedInContainer.classList.remove('hidden');
+    } else {
+      authContainer.classList.remove('hidden');
+      loggedInContainer.classList.add('hidden');
+    }
+  }
+
+  function switchTab(tab) {
+    if (tab === 'login') {
+      loginTab.classList.add('text-primary');
+      signupTab.classList.remove('text-primary');
+      signupTab.classList.add('text-gray-500');
+      loginForm.classList.remove('hidden');
+      signupForm.classList.add('hidden');
+      tabIndicator.style.transform = 'translateX(0)';
+    } else {
+      signupTab.classList.add('text-primary');
+      loginTab.classList.remove('text-primary');
+      loginTab.classList.add('text-gray-500');
+      signupForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+      tabIndicator.style.transform = 'translateX(100%)';
+    }
+  }
+
+  document.getElementById('signup-password').addEventListener('input', function () {
+    const password = this.value;
+    let strength = 0;
+    if (password.length >= 8) strength += 1;
+    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength += 1;
+    if (password.match(/\d/)) strength += 1;
+    if (password.match(/[^a-zA-Z\d]/)) strength += 1;
+
+    switch (strength) {
+      case 1:
+        passwordStrengthIndicator.style.width = '25%';
+        passwordStrengthIndicator.className = 'password-strength h-full bg-red-500 rounded-full';
+        passwordStrengthText.textContent = 'Faible';
+        break;
+      case 2:
+        passwordStrengthIndicator.style.width = '50%';
+        passwordStrengthIndicator.className = 'password-strength h-full bg-yellow-500 rounded-full';
+        passwordStrengthText.textContent = 'Moyen';
+        break;
+      case 3:
+        passwordStrengthIndicator.style.width = '75%';
+        passwordStrengthIndicator.className = 'password-strength h-full bg-green-500 rounded-full';
+        passwordStrengthText.textContent = 'Fort';
+        break;
+      case 4:
+        passwordStrengthIndicator.style.width = '100%';
+        passwordStrengthIndicator.className = 'password-strength h-full bg-green-600 rounded-full';
+        passwordStrengthText.textContent = 'Très fort';
+        break;
+      default:
+        passwordStrengthIndicator.style.width = '25%';
+        passwordStrengthIndicator.className = 'password-strength h-full bg-red-500 rounded-full';
+        passwordStrengthText.textContent = 'Très faible';
+    }
+  });
+
+  function showLoading() {
+    loadingOverlay.classList.remove('hidden');
+  }
+
+  function hideLoading() {
+    loadingOverlay.classList.add('hidden');
+  }
+
+  async function chargerDepartements() {
+    try {
+      const snapshot = await db.ref('region_nationale').once('value');
+      departementSelect.innerHTML = '<option value="" disabled selected>Sélectionnez un département</option>';
+      
+      snapshot.forEach(departmentSnapshot => {
+        const option = document.createElement('option');
+        option.value = departmentSnapshot.key;
+        option.textContent = departmentSnapshot.key;
+        departementSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Erreur lors du chargement des départements:', error);
+      departementSelect.innerHTML = '<option value="" disabled selected>Erreur de chargement</option>';
+    }
+  }
+
+  async function chargerCommunes(departement) {
+    try {
+      const snapshot = await db.ref(`region_nationale/${departement}`).once('value');
+      communeSelect.innerHTML = '<option value="" disabled selected>Sélectionnez une commune</option>';
+      
+      snapshot.forEach(communeSnapshot => {
+        if(communeSnapshot.key && communeSnapshot.key.trim() !== '') {
+          const option = document.createElement('option');
+          option.value = communeSnapshot.key;
+          option.textContent = communeSnapshot.key;
+          communeSelect.appendChild(option);
+        }
+      });
+      
+      const autreOption = document.createElement('option');
+      autreOption.value = 'autre';
+      autreOption.textContent = 'Ma commune n\'est pas dans la liste';
+      communeSelect.appendChild(autreOption);
+    } catch (error) {
+      console.error('Erreur lors du chargement des communes:', error);
+      communeSelect.innerHTML = '<option value="" disabled selected>Erreur de chargement</option>';
+    }
+  }
+
+  departementSelect.addEventListener('change', async function() {
+    if(this.value) {
+      await chargerCommunes(this.value);
+    }
+  });
+
+  communeSelect.addEventListener('change', function() {
+    const showCommuneField = this.value === 'autre';
+    nouvelleCommuneField.classList.toggle('visible-field', showCommuneField);
+    nouvelleCommuneField.classList.toggle('hidden-field', !showCommuneField);
+    nouvelleCommuneInput.toggleAttribute('required', showCommuneField);
+    if(showCommuneField) nouvelleCommuneInput.focus();
+  });
+
+  telephoneInput.addEventListener('input', function() {
+    const value = this.value.replace(/\D/g, '');
+    this.value = value;
+    
+    if(value.length === 10) {
+      this.classList.remove('border-red-500');
+      this.classList.add('border-green-500');
+      setTimeout(() => {
+        this.classList.remove('border-green-500');
+        this.classList.add('border-gray-300');
+      }, 1000);
+    } else if(value.length > 0) {
+      this.classList.remove('border-gray-300');
+      this.classList.add('border-red-500');
+    } else {
+      this.classList.remove('border-red-500', 'border-green-500');
+      this.classList.add('border-gray-300');
+    }
+  });
+
+  loginFormElement.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    showLoading();
+
+    db.ref('membres').orderByChild('email').equalTo(email).once('value')
+      .then(snapshot => {
+        hideLoading();
+        if (snapshot.exists()) {
+          let found = false;
+          snapshot.forEach(child => {
+            if (child.val().password === password) {
+              found = true;
+              
+              localStorage.setItem('userEmail', email);
+              localStorage.setItem('userName', child.val().nom);
+              localStorage.setItem('userTelephone', child.val().telephone);
+              localStorage.setItem('userDepartement', child.val().departement);
+              localStorage.setItem('userCommune', child.val().commune);
+              
+              loginSuccess.textContent = 'Connexion réussie!';
+              loginSuccess.classList.remove('hidden');
+              loginError.classList.add('hidden');
+              
+              setTimeout(() => {
+                window.location.href = 'dashboard';
+              }, 1000);
+            }
+          });
+          if (!found) throw new Error('Mot de passe incorrect');
+        } else {
+          throw new Error('Utilisateur non trouvé');
+        }
+      })
+      .catch(error => {
+        hideLoading();
+        loginError.textContent = error.message;
+        loginError.classList.remove('hidden');
+        loginError.classList.add('animate-slideFade');
+        loginSuccess.classList.add('hidden');
+      });
+  });
+
+  signupFormElement.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const name = document.getElementById('signup-name').value;
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+    const telephone = telephoneInput.value;
+
+    if (password.length < 6) {
+      signupError.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
+      signupError.classList.remove('hidden');
+      signupError.classList.add('animate-slideFade');
+      return;
+    }
+
+    try {
+      showLoading();
+      
+      if (telephone.length !== 10) {
+        throw new Error('Veuillez entrer un numéro de téléphone valide (10 chiffres)');
+      }
+
+      const emailCheck = await db.ref('membres').orderByChild('email').equalTo(email).once('value');
+      if (emailCheck.exists()) {
+        throw new Error('Cet email est déjà utilisé');
+      }
+
+      const telCheck = await db.ref('membres').orderByChild('telephone').equalTo(telephone).once('value');
+      if (telCheck.exists()) {
+        throw new Error('Ce numéro de téléphone est déjà utilisé');
+      }
+
+      const departement = departementSelect.value;
+      if (!departement) {
+        throw new Error('Veuillez sélectionner un département');
+      }
+      
+      let commune = communeSelect.value;
+      if (!commune) {
+        throw new Error('Veuillez sélectionner une commune');
+      }
+
+      if (commune === 'autre') {
+        commune = nouvelleCommuneInput.value.trim();
+        if (!commune) {
+          throw new Error('Veuillez entrer le nom de votre commune');
+        }
+        
+        await db.ref(`region_nationale/${departement}/${commune}`).set(true);
+      }
+
+      const newUserRef = db.ref('membres').push();
+      await newUserRef.set({
+        nom: name,
+        email: email,
+        password: password,
+        telephone: telephone,
+        departement: departement,
+        commune: commune,
+        dateInscription: firebase.database.ServerValue.TIMESTAMP
+      });
+
+      localStorage.setItem('userName', name);
+      localStorage.setItem('userEmail', email);
+      localStorage.setItem('userPassword', password);
+      localStorage.setItem('userTelephone', telephone);
+      localStorage.setItem('userDepartement', departement);
+      localStorage.setItem('userCommune', commune);
+
+      hideLoading();
+      signupSuccess.textContent = 'Inscription réussie! Veuillez vous connecter.';
+      signupSuccess.classList.remove('hidden');
+      signupSuccess.classList.add('animate-slideFade');
+      signupError.classList.add('hidden');
+      
+      document.getElementById('signup-name').value = '';
+      document.getElementById('signup-email').value = '';
+      document.getElementById('signup-password').value = '';
+      telephoneInput.value = '';
+      departementSelect.value = '';
+      communeSelect.value = '';
+      nouvelleCommuneInput.value = '';
+      nouvelleCommuneField.classList.remove('visible-field');
+      nouvelleCommuneField.classList.add('hidden-field');
+      
+      passwordStrengthIndicator.style.width = '33%';
+      passwordStrengthIndicator.className = 'password-strength h-full bg-red-500 rounded-full';
+      passwordStrengthText.textContent = 'Faible';
+      
+      setTimeout(() => switchTab('login'), 2000);
+    } catch (error) {
+      hideLoading();
+      signupError.textContent = error.message;
+      signupError.classList.remove('hidden');
+      signupError.classList.add('animate-slideFade');
+      signupSuccess.classList.add('hidden');
+    }
+  });
+
+
+  logoutBtn.addEventListener('click', function() {
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userPassword');
+    localStorage.removeItem('userTelephone');
+    localStorage.removeItem('userDepartement');
+    localStorage.removeItem('userCommune');
+    
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+    
+    loginSuccess.textContent = 'Déconnexion réussie!';
+    loginSuccess.classList.remove('hidden');
+    loginError.classList.add('hidden');
+    
+    setTimeout(() => {
+      loggedInContainer.classList.add('hidden');
+      authContainer.classList.remove('hidden');
+      loginSuccess.classList.add('hidden');
+    }, 1500);
+  });
+
+  
+  goToDashboardBtn.addEventListener('click', function() {
+    window.location.href = 'dashboard';
+  });
+
+  
+  document.addEventListener('DOMContentLoaded', function () {
+    checkLoginState();
+    chargerDepartements();
+  });
+</script>
+</body>
+</html>
