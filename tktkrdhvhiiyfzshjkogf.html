@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration Base de Données</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #34495e;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .search-box {
+            flex-grow: 1;
+            max-width: 500px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .data-container {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .data-header {
+            background-color: var(--dark);
+            color: white;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr 120px 120px;
+            gap: 10px;
+            font-weight: bold;
+        }
+        
+        .data-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .data-item {
+            display: grid;
+            grid-template-columns: 1fr 120px 120px;
+            gap: 10px;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+        
+        .data-item:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .data-key {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .data-value {
+            color: #666;
+            word-break: break-word;
+            white-space: pre-wrap;
+            max-height: 100px;
+            overflow-y: auto;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .table-name {
+            background-color: #e9ecef;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-bottom: 2px solid #dee2e6;
+            margin-top: 20px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close:hover {
+            color: var(--dark);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .data-header,
+            .data-item {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+            
+            .actions {
+                justify-content: flex-start;
+                margin-top: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .search-box {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Administration Base de Données</h1>
+        </header>
+        
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Rechercher dans la base de données...">
+            </div>
+            <button id="addBtn" class="btn btn-primary">Nouvelle Entrée</button>
+        </div>
+        
+        <div id="tablesContainer"></div>
+    </div>
+    
+    <div id="dataModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Ajouter une entrée</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="dataForm">
+                <input type="hidden" id="itemKey">
+                <input type="hidden" id="tableName">
+                <div class="form-group">
+                    <label for="keyInput">Clé</label>
+                    <input type="text" id="keyInput" required>
+                </div>
+                <div class="form-group">
+                    <label for="valueInput">Valeur (JSON pour les objets)</label>
+                    <textarea id="valueInput" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="typeSelect">Type de données</label>
+                    <select id="typeSelect">
+                        <option value="string">Chaîne de caractères</option>
+                        <option value="number">Nombre</option>
+                        <option value="boolean">Booléen</option>
+                        <option value="json">Objet JSON</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancelBtn" class="btn">Annuler</button>
+                    <button type="submit" class="btn btn-success">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirmer la suppression</h2>
+                <span class="close">&times;</span>
+            </div>
+            <p>Êtes-vous sûr de vouloir supprimer cette entrée ?</p>
+            <div class="modal-footer">
+                <button type="button" id="deleteCancelBtn" class="btn">Annuler</button>
+                <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzo0khblPEzq28bS0ZuZmSMBqJm87WtNM",
+            authDomain: "orjeun-9dec4.firebaseapp.com",
+            databaseURL: "https://orjeun-9dec4-default-rtdb.firebaseio.com",
+            projectId: "orjeun-9dec4",
+            storageBucket: "orjeun-9dec4.appspot.com",
+            messagingSenderId: "979782321937",
+            appId: "1:979782321937:web:5b3971dba3240ae4b16eb0",
+            measurementId: "G-G316HCYF9E"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        const dataBody = document.getElementById('dataBody');
+        const searchInput = document.getElementById('searchInput');
+        const addBtn = document.getElementById('addBtn');
+        const dataModal = document.getElementById('dataModal');
+        const deleteModal = document.getElementById('deleteModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const dataForm = document.getElementById('dataForm');
+        const itemKeyInput = document.getElementById('itemKey');
+        const tableNameInput = document.getElementById('tableName');
+        const keyInput = document.getElementById('keyInput');
+        const valueInput = document.getElementById('valueInput');
+        const typeSelect = document.getElementById('typeSelect');
+        const closeButtons = document.querySelectorAll('.close');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const deleteCancelBtn = document.getElementById('deleteCancelBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const tablesContainer = document.getElementById('tablesContainer');
+        
+        let currentData = {};
+        let itemToDelete = null;
+        let isEditing = false;
+        let currentTable = null;
+        
+        database.ref().on('value', (snapshot) => {
+            currentData = snapshot.val() || {};
+            renderData(currentData);
+        });
+        
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) {
+                const filteredData = {};
+                Object.keys(currentData).forEach(table => {
+                    filteredData[table] = {};
+                    Object.keys(currentData[table]).forEach(key => {
+                        if (key.toLowerCase().includes(searchTerm) || 
+                            JSON.stringify(currentData[table][key]).toLowerCase().includes(searchTerm)) {
+                            filteredData[table][key] = currentData[table][key];
+                        }
+                    });
+                });
+                renderData(filteredData);
+            } else {
+                renderData(currentData);
+            }
+        });
+        
+        addBtn.addEventListener('click', () => {
+            isEditing = false;
+            modalTitle.textContent = "Ajouter une entrée";
+            dataForm.reset();
+            itemKeyInput.value = '';
+            tableNameInput.value = '';
+            dataModal.style.display = 'flex';
+        });
+        
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                dataModal.style.display = 'none';
+                deleteModal.style.display = 'none';
+            });
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+            dataModal.style.display = 'none';
+        });
+        
+        deleteCancelBtn.addEventListener('click', () => {
+            deleteModal.style.display = 'none';
+        });
+        
+        dataForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const key = keyInput.value;
+            let value = valueInput.value;
+            const type = typeSelect.value;
+            const table = tableNameInput.value || key;
+            
+            try {
+                switch(type) {
+                    case 'number':
+                        value = Number(value);
+                        break;
+                    case 'boolean':
+                        value = value.toLowerCase() === 'true';
+                        break;
+                    case 'json':
+                        value = JSON.parse(value);
+                        break;
+                }
+            } catch (error) {
+                alert("Erreur de format de données: " + error.message);
+                return;
+            }
+            
+            if (isEditing && itemKeyInput.value !== key) {
+                if (currentTable) {
+                    database.ref(`${currentTable}/${itemKeyInput.value}`).remove();
+                } else {
+                    database.ref(itemKeyInput.value).remove();
+                }
+            }
+            
+            const ref = currentTable ? 
+                database.ref(`${currentTable}/${key}`) : 
+                database.ref(key);
+                
+            ref.set(value)
+                .then(() => {
+                    dataModal.style.display = 'none';
+                    dataForm.reset();
+                })
+                .catch(error => {
+                    alert("Erreur lors de l'enregistrement: " + error.message);
+                });
+        });
+        
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (itemToDelete) {
+                const ref = currentTable ? 
+                    database.ref(`${currentTable}/${itemToDelete}`) : 
+                    database.ref(itemToDelete);
+                    
+                ref.remove()
+                    .then(() => {
+                        deleteModal.style.display = 'none';
+                        itemToDelete = null;
+                    })
+                    .catch(error => {
+                        alert("Erreur lors de la suppression: " + error.message);
+                    });
+            }
+        });
+        
+        function renderData(data) {
+            tablesContainer.innerHTML = '';
+            
+            if (Object.keys(data).length === 0) {
+                tablesContainer.innerHTML = '<div class="empty-state">Aucune donnée trouvée</div>';
+                return;
+            }
+            
+            Object.keys(data).forEach(table => {
+                const tableData = data[table];
+                
+                if (typeof tableData !== 'object' || tableData === null) {
+                    return;
+                }
+                
+                const tableElement = document.createElement('div');
+                tableElement.className = 'data-container';
+                
+                const tableNameElement = document.createElement('div');
+                tableNameElement.className = 'table-name';
+                tableNameElement.textContent = table;
+                tableElement.appendChild(tableNameElement);
+                
+                const dataHeader = document.createElement('div');
+                dataHeader.className = 'data-header';
+                dataHeader.innerHTML = `
+                    <div>Clé / Valeur</div>
+                    <div>Type</div>
+                    <div>Actions</div>
+                `;
+                tableElement.appendChild(dataHeader);
+                
+                const dataBody = document.createElement('div');
+                dataBody.className = 'data-body';
+                
+                if (Object.keys(tableData).length === 0) {
+                    dataBody.innerHTML = '<div class="empty-state">Aucune entrée dans cette table</div>';
+                } else {
+                    Object.keys(tableData).forEach(key => {
+                        const value = tableData[key];
+                        const valueType = typeof value;
+                        let displayValue = value;
+                        
+                        if (valueType === 'object') {
+                            displayValue = JSON.stringify(value, null, 2);
+                        }
+                        
+                        const itemElement = document.createElement('div');
+                        itemElement.className = 'data-item';
+                        itemElement.innerHTML = `
+                            <div>
+                                <div class="data-key">${key}</div>
+                                <div class="data-value">${displayValue}</div>
+                            </div>
+                            <div>${valueType}</div>
+                            <div class="actions">
+                                <button class="btn btn-primary edit-btn" data-table="${table}" data-key="${key}">Modifier</button>
+                                <button class="btn btn-danger delete-btn" data-table="${table}" data-key="${key}">Supprimer</button>
+                            </div>
+                        `;
+                        
+                        dataBody.appendChild(itemElement);
+                    });
+                }
+                
+                tableElement.appendChild(dataBody);
+                tablesContainer.appendChild(tableElement);
+                
+                dataBody.querySelectorAll('.edit-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const key = e.target.getAttribute('data-key');
+                        const table = e.target.getAttribute('data-table');
+                        editItem(table, key, tableData[key]);
+                    });
+                });
+                
+                dataBody.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const key = e.target.getAttribute('data-key');
+                        const table = e.target.getAttribute('data-table');
+                        confirmDelete(table, key);
+                    });
+                });
+            });
+        }
+        
+        function editItem(table, key, value) {
+            isEditing = true;
+            currentTable = table;
+            modalTitle.textContent = "Modifier une entrée";
+            
+            itemKeyInput.value = key;
+            tableNameInput.value = table;
+            keyInput.value = key;
+            
+            const valueType = typeof value;
+            let displayValue = value;
+            let selectedType = valueType;
+            
+            if (valueType === 'object') {
+                displayValue = JSON.stringify(value, null, 2);
+                selectedType = 'json';
+            } else if (valueType === 'boolean') {
+                displayValue = value.toString();
+                selectedType = 'boolean';
+            } else if (valueType === 'number') {
+                displayValue = value.toString();
+                selectedType = 'number';
+            } else {
+                selectedType = 'string';
+            }
+            
+            valueInput.value = displayValue;
+            typeSelect.value = selectedType;
+            
+            dataModal.style.display = 'flex';
+        }
+        
+        function confirmDelete(table, key) {
+            currentTable = table;
+            itemToDelete = key;
+            deleteModal.style.display = 'flex';
+        }
+        
+        window.addEventListener('click', (e) => {
+            if (e.target === dataModal) {
+                dataModal.style.display = 'none';
+            }
+            if (e.target === deleteModal) {
+                deleteModal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
